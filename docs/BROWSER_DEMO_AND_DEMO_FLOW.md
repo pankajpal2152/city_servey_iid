@@ -1,0 +1,264 @@
+# Browser Demo and Demo Flow
+
+Date: 2026-07-08
+
+## Demo Goal
+
+Show that the City Survey Node.js backend is connected to the `DEV_CITY_SURVEY`
+RDS database and that the two active APIs work end to end:
+
+- Authenticate user
+- Add/update user with JWT protection
+
+## Pre-Demo Checklist
+
+1. Confirm `.env` is configured.
+
+```powershell
+Get-Content .env
+```
+
+Required values:
+
+- `PORT`
+- `DB_HOST`
+- `DB_USER`
+- `DB_PASS`
+- `DB_NAME`
+- `JWT_SECRET`
+
+2. Check whether the configured local port `3103` is already used.
+
+```powershell
+Get-NetTCPConnection -LocalPort 3103 -State Listen -ErrorAction SilentlyContinue |
+  Select-Object LocalAddress,LocalPort,OwningProcess,@{Name='ProcessName';Expression={(Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName}}
+```
+
+3. Start the backend.
+
+```powershell
+npm start
+```
+
+If port `3103` is busy, start on a different temporary port:
+
+```powershell
+$env:PORT='3104'
+npm start
+```
+
+4. Open Swagger in the browser.
+
+`http://localhost:3103/api/api-docs`
+
+If you use a different `PORT`, open Swagger on that same port. Swagger calls
+the current browser host because `docs/swagger.js` uses `servers: [{ url: '/' }]`.
+
+## Browser Demo Flow Through Swagger
+
+### Step 1: Show Swagger Loads
+
+Open:
+
+`http://localhost:3103/api/api-docs`
+
+Expected:
+
+- Page title: `City Survey Node.js API`
+- Visible tags:
+  - `Auth`
+  - `User`
+- Visible APIs:
+  - `POST /api/auth/api-post-authenticate-user`
+  - `POST /api/user/api-post-add-update-user`
+
+### Step 2: Show Login Validation
+
+Open:
+
+`POST /api/auth/api-post-authenticate-user`
+
+Click:
+
+`Try it out`
+
+Use invalid body:
+
+```json
+{}
+```
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 400
+- Response:
+
+```json
+{
+  "status": "false",
+  "response": "USER_NAME and PASSWORD are required"
+}
+```
+
+### Step 3: Authenticate Valid User
+
+Use body:
+
+```json
+[
+  {
+    "USER_NAME": "sai@yopmail.com",
+    "PASSWORD": "Abc@1234"
+  }
+]
+```
+
+Expected:
+
+- HTTP 200
+- `status: true`
+- `Token` exists in response
+- User details returned from database, for example `FIRST_NAME`, `EMAIL_ID`,
+  `USER_SYS_ID`, and `SYSTEM_ROLE_NAME`
+
+Copy the `Token` value for the next step.
+
+### Step 4: Authorize Swagger
+
+Click:
+
+`Authorize`
+
+Enter:
+
+```text
+Bearer <Token from login response>
+```
+
+Click:
+
+`Authorize`
+
+Close the modal.
+
+### Step 5: Test Protected Add/Update User API Safely
+
+Open:
+
+`POST /api/user/api-post-add-update-user`
+
+Click:
+
+`Try it out`
+
+Use the existing sample user:
+
+```json
+{
+  "ITEM": "ADD_USER",
+  "USER_SYS_ID": 0,
+  "SYSTEM_ROLE_SYS_ID": 1,
+  "FIRST_NAME": "Sai",
+  "LAST_NAME": "Roy",
+  "GENDER": "Male",
+  "MOBILE_NO": "7894561230",
+  "EMAIL_ID": "sai@yopmail.com",
+  "ORGANISATION_SYS_ID": "1",
+  "PASSWORD": "Abc@1234",
+  "CREATED_BY": "1"
+}
+```
+
+Expected safe demo result:
+
+- HTTP 200
+- DB response similar to:
+
+```json
+{
+  "status": "false",
+  "response": "This Email Id Already Exists"
+}
+```
+
+This is a good demo result because it proves:
+
+- Swagger reached the Express route
+- JWT middleware accepted the token
+- Express reached the RDS stored procedure
+- The stored procedure checked real database data
+- No duplicate sample user was created
+
+## Full Demo Storyline for Senior Developer
+
+1. "The app starts from `index.js`, where only City Survey auth and user routes
+   are mounted."
+2. "Database connection comes from `.env` through `config/db.js`; no hardcoded
+   DB credentials are needed in source."
+3. "Swagger is limited to the active City Survey APIs, so old event/payment APIs
+   are not shown."
+4. "First I will prove request validation with an empty auth payload."
+5. "Now I will login using the sample database user and copy the JWT token."
+6. "Now I will authorize Swagger and call the protected add/update user API."
+7. "The duplicate email response proves API to DB integration without creating a
+   new user during the demo."
+
+## Browser Console Demo Alternative
+
+If Swagger is not preferred, open the browser console on:
+
+`http://localhost:3103/api/api-docs`
+
+Run:
+
+```javascript
+const baseUrl = 'http://localhost:3103';
+
+const authResponse = await fetch(`${baseUrl}/api/auth/api-post-authenticate-user`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify([{ USER_NAME: 'sai@yopmail.com', PASSWORD: 'Abc@1234' }]),
+});
+
+const authJson = await authResponse.json();
+console.log(authResponse.status, authJson);
+```
+
+Then run:
+
+```javascript
+const userResponse = await fetch(`${baseUrl}/api/user/api-post-add-update-user`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+  body: JSON.stringify({
+    ITEM: 'ADD_USER',
+    USER_SYS_ID: 0,
+    SYSTEM_ROLE_SYS_ID: 1,
+    FIRST_NAME: 'Sai',
+    LAST_NAME: 'Roy',
+    GENDER: 'Male',
+    MOBILE_NO: '7894561230',
+    EMAIL_ID: 'sai@yopmail.com',
+    ORGANISATION_SYS_ID: '1',
+    PASSWORD: 'Abc@1234',
+    CREATED_BY: '1',
+  }),
+});
+
+console.log(userResponse.status, await userResponse.json());
+```
+
+## Demo Do Not Do List
+
+- Do not use a new random email in the add user demo unless the team wants a
+  real dev database user to be created.
+- Do not paste database passwords into screen-shared notes.
+- Do not re-enable old routes in `index.js` for this demo.
+- Do not use production database credentials for local demo.
