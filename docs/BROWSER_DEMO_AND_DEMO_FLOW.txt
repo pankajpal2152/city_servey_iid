@@ -11,6 +11,7 @@ RDS database and that the active APIs work end to end:
 - Add/update user with JWT protection
 - View customer list with JWT protection
 - Add/update customer details with JWT protection
+- View project list with JWT protection
 - Add/update project with JWT protection
 - Health check without JWT
 
@@ -81,6 +82,7 @@ Expected:
   - `POST /api/user/api-post-add-update-user`
   - `GET /api/customer/api-get-view-list-customer-details`
   - `POST /api/customer/api-post-add-update-customer-details`
+  - `GET /api/project/api-get-view-list-project-details`
   - `POST /api/project/api-post-add-update-project`
 
 ### Step 2: Show Health Check
@@ -281,7 +283,29 @@ customer record.
 Only execute the full database developer sample if the team approves creating
 real dev DB customer and PIC records.
 
-### Step 9: Test Protected Project API Routing Safely
+### Step 9: Test Protected Project List API
+
+Open:
+
+`GET /api/project/api-get-view-list-project-details`
+
+Click:
+
+`Try it out`
+
+Keep `ITEM` as `VIEW_ALL` or leave it empty.
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status: true`
+- Response contains project rows when data exists
+
+### Step 10: Test Protected Project API Routing Safely
 
 Open:
 
@@ -334,7 +358,8 @@ real dev DB project records.
 9. "Then I will show the read-only customer list API."
 10. "For customer add/update, I will show the protected route validation. The
    full sample is a write operation and should be run only with team approval."
-11. "For project add/update, I will show the protected route validation. The
+11. "Then I will show the read-only project list API."
+12. "For project add/update, I will show the protected route validation. The
    full sample is also a write operation and should be run only with team
    approval."
 
@@ -418,6 +443,19 @@ console.log(customerValidationResponse.status, await customerValidationResponse.
 ```
 
 To validate the project route without writing data:
+
+```javascript
+const projectListResponse = await fetch(`${baseUrl}/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+});
+
+console.log(projectListResponse.status, await projectListResponse.json());
+```
+
+To validate the project add/update route without writing data:
 
 ```javascript
 const projectValidationResponse = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {

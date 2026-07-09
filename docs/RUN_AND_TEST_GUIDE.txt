@@ -69,7 +69,7 @@ const mysql = require('mysql2/promise');
        FROM INFORMATION_SCHEMA.ROUTINES
       WHERE ROUTINE_SCHEMA = ?
         AND ROUTINE_TYPE = 'PROCEDURE'
-        AND ROUTINE_NAME IN (?, ?, ?, ?, ?)
+        AND ROUTINE_NAME IN (?, ?, ?, ?, ?, ?)
       ORDER BY ROUTINE_NAME`,
     [
       process.env.DB_NAME,
@@ -77,6 +77,7 @@ const mysql = require('mysql2/promise');
       'USP_POST_USER_PROFILE_ACTIVITY',
       'USP_GET_LIST_CUSTOMER_ACTIVITY',
       'USP_POST_CUSTOMER_DETAILS_ACTIVITY',
+      'USP_GET_LIST_PROJECT_ACTIVITY',
       'USP_POST_PROJECT_ACTIVITY',
     ]
   );
@@ -139,16 +140,17 @@ Confirm these tags and endpoints are visible:
 - `User`: `POST /api/user/api-post-add-update-user`
 - `Customer`: `GET /api/customer/api-get-view-list-customer-details`
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
+- `Project`: `GET /api/project/api-get-view-list-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
 
-Run the browser demo steps from [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.md).
+Run the browser demo steps from [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.txt).
 
 Dev server Swagger:
 
 `https://api-dev.citysurveyors.com.sg/api/api-docs/`
 
-UI developers can use [API_ENDPOINTS_DEV_SERVER.md](./API_ENDPOINTS_DEV_SERVER.md)
-or [API_URLS.md](./API_URLS.md) for copy-paste API URLs.
+UI developers can use [API_ENDPOINTS_DEV_SERVER.txt](./API_ENDPOINTS_DEV_SERVER.txt)
+or [API_URLS.txt](./API_URLS.txt) for copy-paste API URLs.
 
 ## 7. PowerShell API Smoke Test
 
@@ -243,6 +245,20 @@ Expected:
 
 - `status: true`
 - `response` contains customer list data when records exist
+
+Then test protected project list API without writing data:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL" `
+  -Method Get `
+  -Headers $headers
+```
+
+Expected:
+
+- `status: true`
+- `response` contains project list data when records exist
 
 Then test protected customer add/update route validation without writing data:
 
@@ -401,6 +417,14 @@ async function getEmailCount(connection) {
     });
     const customerListJson = await customerListResponse.json();
 
+    const projectListResponse = await fetch(`${baseUrl}/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+    });
+    const projectListJson = await projectListResponse.json();
+
     const projectValidationResponse = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {
       method: 'POST',
       headers: {
@@ -427,6 +451,8 @@ async function getEmailCount(connection) {
       customer_validation_response: customerValidationJson.response,
       customer_list_http_status: customerListResponse.status,
       customer_list_status: customerListJson.status,
+      project_list_http_status: projectListResponse.status,
+      project_list_status: projectListJson.status,
       project_validation_http_status: projectValidationResponse.status,
       project_validation_response: projectValidationJson.response,
     });
@@ -456,6 +482,8 @@ Expected:
 - `customer_validation_response: CUSTOMER_TYPE is required`
 - `customer_list_http_status: 200`
 - `customer_list_status: true`
+- `project_list_http_status: 200`
+- `project_list_status: true`
 - `project_validation_http_status: 400`
 - `project_validation_response: CUSTOMER_SYS_ID is required`
 

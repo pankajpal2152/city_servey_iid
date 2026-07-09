@@ -27,7 +27,7 @@ const options = {
       },
       {
         name: 'Project',
-        description: 'City Survey project add/update APIs'
+        description: 'City Survey project list and add/update APIs'
       }
     ],
     components: {

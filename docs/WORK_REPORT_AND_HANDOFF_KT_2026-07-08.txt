@@ -26,12 +26,16 @@ Completed items:
 - Implemented active add/update project API:
   - `POST /api/project/api-post-add-update-project`
   - Procedure: `USP_POST_PROJECT_ACTIVITY`
+- Implemented active project list details API:
+  - `GET /api/project/api-get-view-list-project-details`
+  - Procedure: `USP_GET_LIST_PROJECT_ACTIVITY`
 - Merged senior developer health API:
   - `GET /health`
   - Route: `routes/health.js`
 - Added JWT generation for successful authentication.
 - Added JWT protection for add/update user and customer details.
 - Added JWT protection for add/update project.
+- Added JWT protection for project list details.
 - Added response helper for stored procedure `JSON_VALUE` parsing.
 - Disabled active mounting of old event, attendee, payment, file upload, and
   email APIs from `index.js`.
@@ -81,7 +85,7 @@ Documentation files:
 - `docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.md`
 - `docs/RUN_AND_TEST_GUIDE.md`
 - `docs/API_URLS.md`
-- `docs/API_ENDPOINTS_DEV_SERVER.md`
+- `docs/API_ENDPOINTS_DEV_SERVER.txt`
 - `docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-08.md`
 - `docs/UI_DEVELOPER_HANDOFF_KT.md`
 
@@ -107,6 +111,7 @@ Database checks:
   - `USP_POST_USER_PROFILE_ACTIVITY`
   - `USP_GET_LIST_CUSTOMER_ACTIVITY`
   - `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
+  - `USP_GET_LIST_PROJECT_ACTIVITY`
   - `USP_POST_PROJECT_ACTIVITY`
 - Auth procedure returned `status: true` for sample user.
 
@@ -123,6 +128,8 @@ HTTP API smoke test:
   full customer samples are write operations.
 - Project route validation can be tested safely with `{ "ITEM": "ADD" }`;
   full project samples are write operations.
+- Project list route can be tested safely with `ITEM=VIEW_ALL`; it is a
+  read-only API.
 
 ## Current Working API Contracts
 
@@ -262,6 +269,30 @@ Request:
 }
 ```
 
+### View Project List Details
+
+Endpoint:
+
+`GET /api/project/api-get-view-list-project-details`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_LIST_PROJECT_ACTIVITY('VIEW_PROJECT', 'VIEW_ALL', @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=VIEW_ALL
+```
+
 ### Health Check
 
 Endpoint:
@@ -307,6 +338,7 @@ Walkthrough order:
    - calls customer details procedure
 8. Show `routes/project.js`:
    - requires JWT middleware
+   - calls project list procedure for view/list
    - validates `ITEM` and required `ADD` fields
    - calls project procedure
 9. Show `routes/health.js`:
@@ -314,8 +346,8 @@ Walkthrough order:
 10. Show `utils/procedureResponse.js`:
    - parses procedure response safely
 11. Show Swagger at `/api/api-docs`.
-12. Run health, auth, user, safe customer validation, and safe project
-    validation demo.
+12. Run health, auth, user, customer list, project list, safe customer
+    validation, and safe project validation demo.
 
 ## Handoff KT for Database Developer
 
@@ -328,6 +360,7 @@ Confirmed:
   - `ADD_UPDATE_USER`
   - `VIEW_CUSTOMER`
   - `ADD_UPDATE_CUSTOMER`
+  - `VIEW_PROJECT`
   - `ADD_UPDATE_PROJECT`
 
 DB follow-up points:

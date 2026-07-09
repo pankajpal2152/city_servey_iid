@@ -1,7 +1,7 @@
 # City Survey Node.js API
 
 Express backend for the City Survey application. The active scope is user
-authentication, user add/update, customer add/update, project add/update, and API health checks
+authentication, user add/update, customer add/update, project list/add/update, and API health checks
 through Node.js, Express, JWT, Swagger, and MySQL stored procedures.
 
 ## Active APIs
@@ -25,6 +25,7 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 | User | POST | `/api/user/api-post-add-update-user` | Yes |
 | Customer | GET | `/api/customer/api-get-view-list-customer-details` | Yes |
 | Customer | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
+| Project | GET | `/api/project/api-get-view-list-project-details` | Yes |
 | Project | POST | `/api/project/api-post-add-update-project` | Yes |
 
 ## Setup & Running Locally
@@ -86,6 +87,7 @@ Swagger must show these City Survey tags and APIs in the browser:
 - `User`: `POST /api/user/api-post-add-update-user`
 - `Customer`: `GET /api/customer/api-get-view-list-customer-details`
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
+- `Project`: `GET /api/project/api-get-view-list-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
 
 If Swagger opens but an API is missing, restart `npm run dev` and hard refresh
@@ -145,6 +147,26 @@ Calls:
 
 ```sql
 CALL USP_GET_LIST_CUSTOMER_ACTIVITY('VIEW_CUSTOMER', 'VIEW_ALL', @ERRNO, @ERRMSG);
+```
+
+Optional query parameter:
+
+```text
+ITEM=VIEW_ALL
+```
+
+If `ITEM` is not provided, the API defaults to `VIEW_ALL`.
+
+### View Project List Details
+
+`GET /api/project/api-get-view-list-project-details`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_LIST_PROJECT_ACTIVITY('VIEW_PROJECT', 'VIEW_ALL', @ERRNO, @ERRMSG);
 ```
 
 Optional query parameter:
@@ -245,12 +267,12 @@ it to the Dev server.
 
 Detailed backend and UI handoff documentation is available in `docs/`:
 
-- [API URL Reference](./docs/API_URLS.md)
-- [UI Developer Dev Server API Endpoint Sheet](./docs/API_ENDPOINTS_DEV_SERVER.md)
-- [Documentation Index](./docs/INDEX.md)
-- [Module Architecture and Scenario Flow](./docs/MODULE_ARCHITECTURE_FLOW.md)
-- [Browser Demo and Demo Flow](./docs/BROWSER_DEMO_AND_DEMO_FLOW.md)
-- [Dev Server Deployment Checklist](./docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.md)
-- [Run and Test Guide](./docs/RUN_AND_TEST_GUIDE.md)
-- [Work Report and Backend Handoff KT](./docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-08.md)
-- [UI Developer Handoff KT](./docs/UI_DEVELOPER_HANDOFF_KT.md)
+- [API URL Reference](./docs/API_URLS.txt)
+- [UI Developer Dev Server API Endpoint Sheet](./docs/API_ENDPOINTS_DEV_SERVER.txt)
+- [Documentation Index](./docs/INDEX.txt)
+- [Module Architecture and Scenario Flow](./docs/MODULE_ARCHITECTURE_FLOW.txt)
+- [Browser Demo and Demo Flow](./docs/BROWSER_DEMO_AND_DEMO_FLOW.txt)
+- [Dev Server Deployment Checklist](./docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.txt)
+- [Run and Test Guide](./docs/RUN_AND_TEST_GUIDE.txt)
+- [Work Report and Backend Handoff KT](./docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-08.txt)
+- [UI Developer Handoff KT](./docs/UI_DEVELOPER_HANDOFF_KT.txt)

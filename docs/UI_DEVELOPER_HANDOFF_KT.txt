@@ -24,7 +24,7 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 Quick endpoint sheet:
 
 ```text
-docs/API_ENDPOINTS_DEV_SERVER.md
+docs/API_ENDPOINTS_DEV_SERVER.txt
 ```
 
 Local default:
@@ -48,6 +48,7 @@ http://localhost:3104
 | Add/update user | POST | `/api/user/api-post-add-update-user` | Yes |
 | View customer list | GET | `/api/customer/api-get-view-list-customer-details` | Yes |
 | Add/update customer details | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
+| View project list | GET | `/api/project/api-get-view-list-project-details` | Yes |
 | Add/update project | POST | `/api/project/api-post-add-update-project` | Yes |
 
 ## Health Check Integration
@@ -310,6 +311,33 @@ The backend expects a root object. If a one-item array is sent accidentally, the
 backend unwraps it before calling the stored procedure so `PIC` remains at the
 root object path expected by the database.
 
+## View Project List Integration
+
+### Request
+
+```http
+GET /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
+Authorization: Bearer <Token>
+```
+
+`ITEM` is optional. If it is omitted, the backend sends `VIEW_ALL` to the stored
+procedure.
+
+### Expected Response Shape
+
+The response comes from `USP_GET_LIST_PROJECT_ACTIVITY`. UI should use the
+`response` field when `status` is `true`.
+
+```json
+{
+  "status": "true",
+  "response": []
+}
+```
+
+Use this API to populate project tables, dashboards, and project management
+screens.
+
 ## Add/Update Project Integration
 
 ### Request
@@ -427,6 +455,23 @@ export async function getCustomerList(token, item = 'VIEW_ALL') {
   return data;
 }
 
+export async function getProjectList(token, item = 'VIEW_ALL') {
+  const response = await fetch(`${baseUrl}/api/project/api-get-view-list-project-details?ITEM=${encodeURIComponent(item)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Project list failed');
+  }
+
+  return data;
+}
+
 export async function addProject(token, payload) {
   const response = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {
     method: 'POST',
@@ -486,6 +531,17 @@ export async function addCustomerDetails(token, payload) {
 
 export async function getCustomerList(token, item = 'VIEW_ALL') {
   const { data } = await api.get('/api/customer/api-get-view-list-customer-details', {
+    params: { ITEM: item },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function getProjectList(token, item = 'VIEW_ALL') {
+  const { data } = await api.get('/api/project/api-get-view-list-project-details', {
     params: { ITEM: item },
     headers: {
       Authorization: `Bearer ${token}`,
@@ -574,6 +630,7 @@ Behavior:
 
 - Require login token.
 - Load customers first so the user can choose `CUSTOMER_SYS_ID` and `PIC_SYS_ID`.
+- Load existing projects with the project list API.
 - Send payload to project add/update API.
 - Show success or failure message from `response`.
 - During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team

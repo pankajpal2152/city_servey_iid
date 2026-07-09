@@ -57,7 +57,13 @@ URL: https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-custo
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-6. Add or Update Project
+6. View Project List
+Method: GET
+URL: https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
+7. Add or Update Project
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
 Auth Required: Yes
@@ -81,6 +87,7 @@ POST /api/auth/api-post-authenticate-user
 POST /api/user/api-post-add-update-user
 GET  /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
 POST /api/customer/api-post-add-update-customer-details
+GET  /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 POST /api/project/api-post-add-update-project
 
 NOTES

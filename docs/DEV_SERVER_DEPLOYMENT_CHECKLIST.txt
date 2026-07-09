@@ -145,10 +145,11 @@ Verify:
 - Procedure `USP_POST_USER_PROFILE_ACTIVITY` exists
 - Procedure `USP_GET_LIST_CUSTOMER_ACTIVITY` exists
 - Procedure `USP_POST_CUSTOMER_DETAILS_ACTIVITY` exists
+- Procedure `USP_GET_LIST_PROJECT_ACTIVITY` exists
 - Procedure `USP_POST_PROJECT_ACTIVITY` exists
 - Sample auth call returns `status: true`
 
-Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.md).
+Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.txt).
 
 ## 8. API Verification Checklist
 
@@ -164,6 +165,7 @@ Verify with Swagger:
 - Protected user API accepts the token
 - Protected customer list API returns `VIEW_ALL` response
 - Protected customer API validates payload when token is provided
+- Protected project list API returns `VIEW_ALL` response
 - Protected project API validates payload when token is provided
 - Duplicate sample email returns `This Email Id Already Exists`
 

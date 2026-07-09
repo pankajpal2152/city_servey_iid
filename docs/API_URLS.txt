@@ -64,6 +64,7 @@ response field named `Token`.
 | User     | POST   | `https://api-dev.citysurveyors.com.sg/api/user/api-post-add-update-user`                             | Yes           |
 | Customer | GET    | `https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL` | Yes           |
 | Customer | POST   | `https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details`             | Yes           |
+| Project  | GET    | `https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`   | Yes           |
 | Project  | POST   | `https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project`                       | Yes           |
 
 ## Relative API Paths
@@ -77,6 +78,7 @@ POST /api/auth/api-post-authenticate-user
 POST /api/user/api-post-add-update-user
 GET  /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
 POST /api/customer/api-post-add-update-customer-details
+GET  /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 POST /api/project/api-post-add-update-project
 ```
 
@@ -208,7 +210,27 @@ Request body:
 
 Running this sample with a valid token may create records in the dev database.
 
-## 6. Add or Update Project
+## 6. View Project List
+
+```text
+GET https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
+```
+
+Auth required: Yes
+
+Query parameter:
+
+| Name     | Required | Default      | Example      |
+| -------- | -------- | ------------ | ------------ |
+| `ITEM` | No       | `VIEW_ALL` | `VIEW_ALL` |
+
+Frontend usage:
+
+```js
+const url = `${API_BASE_URL}/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`;
+```
+
+## 7. Add or Update Project
 
 ```text
 POST https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
@@ -250,9 +272,10 @@ The dev Swagger URL should show these API paths:
 - `POST /api/user/api-post-add-update-user`
 - `GET /api/customer/api-get-view-list-customer-details`
 - `POST /api/customer/api-post-add-update-customer-details`
+- `GET /api/project/api-get-view-list-project-details`
 - `POST /api/project/api-post-add-update-project`
 
-This list was checked against:
+After deployment, verify the Swagger list at:
 
 ```text
 https://api-dev.citysurveyors.com.sg/api/api-docs/swagger-ui-init.js

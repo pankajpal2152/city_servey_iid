@@ -18,6 +18,7 @@ Active endpoints:
 - `POST /api/user/api-post-add-update-user`
 - `GET /api/customer/api-get-view-list-customer-details`
 - `POST /api/customer/api-post-add-update-customer-details`
+- `GET /api/project/api-get-view-list-project-details`
 - `POST /api/project/api-post-add-update-project`
 
 Swagger for these active routes is available at `/api/api-docs` on the current
