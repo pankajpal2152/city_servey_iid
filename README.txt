@@ -1,7 +1,8 @@
 # City Survey Node.js API
 
 Express backend for the City Survey application. The active scope is user
-authentication, user add/update, customer add/update, project list/add/update, and API health checks
+authentication, user list/add/update, customer add/update, project list/add/update,
+master system role list/add/update, and API health checks
 through Node.js, Express, JWT, Swagger, and MySQL stored procedures.
 
 ## Active APIs
@@ -22,11 +23,14 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 | --- | --- | --- | --- |
 | Health | GET | `/health` | No |
 | Auth | POST | `/api/auth/api-post-authenticate-user` | No |
+| User | GET | `/api/user/api-get-view-user-list-info` | Yes |
 | User | POST | `/api/user/api-post-add-update-user` | Yes |
 | Customer | GET | `/api/customer/api-get-view-list-customer-details` | Yes |
 | Customer | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
 | Project | GET | `/api/project/api-get-view-list-project-details` | Yes |
 | Project | POST | `/api/project/api-post-add-update-project` | Yes |
+| Master | GET | `/api/master/api-get-view-master-system-roles` | Yes |
+| Master | POST | `/api/master/api-post-add-update-master-system-role` | Yes |
 
 ## Setup & Running Locally
 
@@ -84,11 +88,14 @@ Swagger must show these City Survey tags and APIs in the browser:
 
 - `Health`: `GET /health`
 - `Auth`: `POST /api/auth/api-post-authenticate-user`
+- `User`: `GET /api/user/api-get-view-user-list-info`
 - `User`: `POST /api/user/api-post-add-update-user`
 - `Customer`: `GET /api/customer/api-get-view-list-customer-details`
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
 - `Project`: `GET /api/project/api-get-view-list-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
+- `Master`: `GET /api/master/api-get-view-master-system-roles`
+- `Master`: `POST /api/master/api-post-add-update-master-system-role`
 
 If Swagger opens but an API is missing, restart `npm run dev` and hard refresh
 the browser with `Ctrl + F5`.
@@ -104,6 +111,26 @@ Calls:
 ```sql
 CALL USP_POST_USER_AUTHENTICATE_ACTIVITY('AUTHENTICATE_USER', '[{"USER_NAME":"sai@yopmail.com","PASSWORD":"Abc@1234"}]', @ERRNO, @ERRMSG);
 ```
+
+### View User List Info
+
+`GET /api/user/api-get-view-user-list-info`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_USER_LIST_ACTIVITY('VIEW_USER', 'VIEW_ALL', @ERRNO, @ERRMSG);
+```
+
+Optional query parameter:
+
+```text
+ITEM=VIEW_ALL
+```
+
+If `ITEM` is not provided, the API defaults to `VIEW_ALL`.
 
 ### Add or Update User
 
@@ -190,6 +217,45 @@ CALL USP_POST_PROJECT_ACTIVITY('ADD_UPDATE_PROJECT', '{"ITEM":"ADD","CUSTOMER_SY
 ```
 
 Running the full sample with a valid token may create project records in the
+dev database.
+
+### View Master System Roles
+
+`GET /api/master/api-get-view-master-system-roles`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_ALL_MASTER_DATA('VIEW_SYSTEM_ROLE', 'VIEW_ALL', NULL, NULL, @ERRNO, @ERRMSG);
+```
+
+Optional query parameters:
+
+```text
+ITEM=VIEW_ALL
+RECORD_SYS_ID=
+ORGANIZATION_SYS_ID=
+```
+
+If `ITEM` is not provided, the API defaults to `VIEW_ALL`. If
+`RECORD_SYS_ID` or `ORGANIZATION_SYS_ID` are not provided, the API sends `NULL`
+to the stored procedure.
+
+### Add or Update Master System Role
+
+`POST /api/master/api-post-add-update-master-system-role`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_POST_ALL_MASTER_DATA('ADD_UPDATE_SYSTEM_ROLE', '{"ITEM":"ADD","RECORD_SYS_ID":"0","ORGANIZATION_SYS_ID":"1","SYSTEM_ROLE":"Business Admin","ROLE_DESC":"Business Admin","USER_TYPE":"Internal","CREATED_BY":1}', @ERRNO, @ERRMSG);
+```
+
+Running the full sample with a valid token may create system role records in the
 dev database.
 
 ## Git Branching & Deployment Strategy

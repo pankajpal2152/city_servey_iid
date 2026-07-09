@@ -1,59 +1,67 @@
 const express = require('express');
-const router = express.Router();
-const db = require('../config/db'); // Your mysql2 connection
+const db = require('../config/db');
 const auth = require('../middlewares/auth');
+const { getProcedureJsonValue } = require('../utils/procedureResponse');
 
-// POST /api/master/add-update-master-name
-/**
- * @swagger
- * /api/master/add-update-master-name:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/add-update-master-name', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_MASTER_NAME', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
+const router = express.Router();
+
+function getSystemRolePayload(body) {
+  return Array.isArray(body) ? body[0] : body;
+}
+
+function parseNullableInt(value, fieldName) {
+  if (value === undefined || value === null || value === '' || value === 'null') {
+    return { value: null };
+  }
+
+  const parsedValue = Number(value);
+
+  if (!Number.isInteger(parsedValue)) {
+    return { error: `${fieldName} must be an integer` };
+  }
+
+  return { value: parsedValue };
+}
+
+function validateSystemRolePayload(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+    return 'Request body must be a system role object';
+  }
+
+  if (!payload.ITEM) {
+    return 'ITEM is required';
+  }
+
+  if (payload.ITEM === 'ADD') {
+    const requiredFields = [
+      'RECORD_SYS_ID',
+      'ORGANIZATION_SYS_ID',
+      'SYSTEM_ROLE',
+      'ROLE_DESC',
+      'USER_TYPE',
+      'CREATED_BY',
+    ];
+    const missingField = requiredFields.find((field) => {
+      const value = payload[field];
+      return value === undefined || value === null || value === '';
+    });
+
+    if (missingField) {
+      return `${missingField} is required`;
     }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
-    finally {
-    if (conn) conn.release();
-  }
-});
 
-// GET /api/master/api-get-view-master-details
+  return null;
+}
+
+// GET /api/master/api-get-view-master-system-roles
 /**
  * @swagger
- * /api/master/api-get-view-master-details:
+ * /api/master/api-get-view-master-system-roles:
  *   get:
  *     tags:
  *       - Master
+ *     summary: View City Survey master system roles
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -61,247 +69,68 @@ router.post('/add-update-master-name', auth, async (req, res) => {
  *         name: ITEM
  *         schema:
  *           type: string
+ *           default: VIEW_ALL
  *         required: false
+ *         description: Master data view mode passed to the stored procedure
  *         example: VIEW_ALL
  *       - in: query
  *         name: RECORD_SYS_ID
  *         schema:
- *           type: string
+ *           type: integer
+ *           nullable: true
  *         required: false
- *         example: 0
+ *         description: Optional role record id filter
  *       - in: query
  *         name: ORGANIZATION_SYS_ID
  *         schema:
- *           type: string
+ *           type: integer
+ *           nullable: true
  *         required: false
- *         example: 0
+ *         description: Optional organization id filter
  *     responses:
  *       200:
- *         description: JSON response from stored procedure
+ *         description: System role master response from stored procedure
+ *       400:
+ *         description: Invalid query parameter
+ *       401:
+ *         description: Authorization token missing
+ *       403:
+ *         description: Authorization token invalid
  */
-router.get('/api-get-view-master-details', auth, async (req, res) => {
+router.get('/api-get-view-master-system-roles', auth, async (req, res) => {
   let conn;
+
   try {
-    conn = await db.getConnection();
-    const { ITEM, RECORD_SYS_ID,ORGANIZATION_SYS_ID } = req.query;
-    const [rows] = await conn.execute(
-      "CALL USP_GET_ALL_MASTER_DATA(?, ?, ?,?, @ERRNO, @ERRMSG);",
-      ['VIEW_MASTER_NAME', ITEM, RECORD_SYS_ID,ORGANIZATION_SYS_ID]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong'});
+    const item = req.query.ITEM || 'VIEW_ALL';
+    const recordSysId = parseNullableInt(req.query.RECORD_SYS_ID, 'RECORD_SYS_ID');
+    const organizationSysId = parseNullableInt(req.query.ORGANIZATION_SYS_ID, 'ORGANIZATION_SYS_ID');
+
+    if (recordSysId.error || organizationSysId.error) {
+      return res.status(400).json({
+        status: 'false',
+        response: recordSysId.error || organizationSysId.error,
+      });
     }
+
+    conn = await db.getConnection();
+    const [rows] = await conn.execute(
+      'CALL USP_GET_ALL_MASTER_DATA(?, ?, ?, ?, @ERRNO, @ERRMSG);',
+      ['VIEW_SYSTEM_ROLE', item, recordSysId.value, organizationSysId.value]
+    );
+
+    const result = getProcedureJsonValue(rows);
+
+    if (!result) {
+      return res.status(500).json({
+        status: 'false',
+        response: 'Oops!! something went wrong',
+      });
+    }
+
+    return res.json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-
-
-// GET /api/master/api-get-view-country-info
-/**
- * @swagger
- * /api/master/api-get-view-country-info:
- *   get:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ITEM
- *         schema:
- *           type: string
- *         required: false
- *       - in: query
- *         name: RECORD_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *       - in: query
- *         name: ORGANIZATION_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *     responses:
- *       200:
- *         description: JSON response from stored procedure
- */
-router.get('/api-get-view-country-info', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const { ITEM, RECORD_SYS_ID, ORGANIZATION_SYS_ID } = req.query;
-
-    const params = [
-      'VIEW_COUNTRY_NAME',
-      ITEM ?? null,
-      RECORD_SYS_ID ?? null,
-      ORGANIZATION_SYS_ID ?? null
-    ];
-
-    const [rows] = await conn.execute(
-      "CALL USP_GET_ALL_MASTER_DATA(?, ?, ?, ?, @ERRNO, @ERRMSG);",
-      params
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-  finally {
-    if (conn) conn.release();
-  }
-});
-
-// GET /api/master/api-get-view-event-category
-/**
- * @swagger
- * /api/master/api-get-view-event-category:
- *   get:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ITEM
- *         schema:
- *           type: string
- *         required: false
- *       - in: query
- *         name: RECORD_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *       - in: query
- *         name: ORGANIZATION_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *     responses:
- *       200:
- *         description: JSON response from stored procedure
- */
-router.get('/api-get-view-event-category', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const { ITEM, RECORD_SYS_ID = null,ORGANIZATION_SYS_ID} = req.query;
-    const [rows] = await conn.execute(
-      "CALL USP_GET_ALL_MASTER_DATA(?, ?, ?,? ,@ERRNO, @ERRMSG);",
-      ['VIEW_EVENT_CATEGORY', ITEM, RECORD_SYS_ID,ORGANIZATION_SYS_ID]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong'});
-    }
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// POST /api/master/api-post-add-update-country
-/**
- * @swagger
- * /api/master/api-post-add-update-country:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/api-post-add-update-country', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_COUNTRY', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// POST /api/master/api-post-add-update-event-category
-/**
- * @swagger
- * /api/master/api-post-add-update-event-category:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/api-post-add-update-event-category', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_EVENT_CATEGORY', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
+  } finally {
     if (conn) conn.release();
   }
 });
@@ -313,6 +142,7 @@ router.post('/api-post-add-update-event-category', auth, async (req, res) => {
  *   post:
  *     tags:
  *       - Master
+ *     summary: Add or update a City Survey master system role
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -320,642 +150,82 @@ router.post('/api-post-add-update-event-category', auth, async (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: array
- *             items:
- *               type: object
+ *             type: object
+ *             required:
+ *               - ITEM
+ *               - RECORD_SYS_ID
+ *               - ORGANIZATION_SYS_ID
+ *               - SYSTEM_ROLE
+ *               - ROLE_DESC
+ *               - USER_TYPE
+ *               - CREATED_BY
+ *             properties:
+ *               ITEM:
+ *                 type: string
+ *                 example: ADD
+ *               RECORD_SYS_ID:
+ *                 type: string
+ *                 example: "0"
+ *               ORGANIZATION_SYS_ID:
+ *                 type: string
+ *                 example: "1"
+ *               SYSTEM_ROLE:
+ *                 type: string
+ *                 example: Business Admin
+ *               ROLE_DESC:
+ *                 type: string
+ *                 example: Business Admin
+ *               USER_TYPE:
+ *                 type: string
+ *                 example: Internal
+ *               CREATED_BY:
+ *                 type: integer
+ *                 example: 1
  *     responses:
  *       200:
- *         description: Success Response
+ *         description: System role add/update response from stored procedure
+ *       400:
+ *         description: Invalid request payload
+ *       401:
+ *         description: Authorization token missing
+ *       403:
+ *         description: Authorization token invalid
  */
 router.post('/api-post-add-update-master-system-role', auth, async (req, res) => {
   let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_SYSTEM_ROLE', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
 
-// GET /api/master/api-get-view-master-system-roles
-/**
- * @swagger
- * /api/master/api-get-view-master-system-roles:
- *   get:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ITEM
- *         schema:
- *           type: string
- *         required: false
- *       - in: query
- *         name: RECORD_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *       - in: query
- *         name: ORGANIZATION_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *     responses:
- *       200:
- *         description: JSON response from stored procedure
- */
-router.get('/api-get-view-master-system-roles', auth, async (req, res) => {
-  let conn;
   try {
-    conn = await db.getConnection();
-    const { ITEM, RECORD_SYS_ID, ORGANIZATION_SYS_ID } = req.query;
-    
-    // Convert undefined to null for SQL compatibility
-    const params = [
-      'VIEW_SYSTEM_ROLE',
-      ITEM ?? null,
-      RECORD_SYS_ID ?? null,
-      ORGANIZATION_SYS_ID ?? null
-    ];
+    const requestPayload = getSystemRolePayload(req.body);
+    const validationError = validateSystemRolePayload(requestPayload);
 
-    const [rows] = await conn.execute(
-      "CALL USP_GET_ALL_MASTER_DATA(?, ?, ?, ?, @ERRNO, @ERRMSG);",
-      params
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong'});
+    if (validationError) {
+      return res.status(400).json({
+        status: 'false',
+        response: validationError,
+      });
     }
+
+    conn = await db.getConnection();
+    const [rows] = await conn.execute(
+      'CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);',
+      ['ADD_UPDATE_SYSTEM_ROLE', JSON.stringify(requestPayload)]
+    );
+
+    const result = getProcedureJsonValue(rows);
+
+    if (!result) {
+      return res.status(500).json({
+        status: 'false',
+        response: 'Oops!! something went wrong',
+      });
+    }
+
+    return res.json(result);
   } catch (error) {
     return res.status(500).json({ error: error.message });
-  }
-  finally {
+  } finally {
     if (conn) conn.release();
   }
 });
 
-// POST /api/master/api-post-add-update-master-project-role
-/**
- * @swagger
- * /api/master/api-post-add-update-master-project-role:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/api-post-add-update-master-project-role', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_PROJECT_ROLE', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// GET /api/master/api-get-view-master-project-role
-/**
- * @swagger
- * /api/master/api-get-view-master-project-role:
- *   get:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ITEM
- *         schema:
- *           type: string
- *         required: false
- *       - in: query
- *         name: RECORD_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *       - in: query
- *         name: ORGANIZATION_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *     responses:
- *       200:
- *         description: JSON response from stored procedure
- */
-router.get('/api-get-view-master-project-role', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const { ITEM, RECORD_SYS_ID, ORGANIZATION_SYS_ID } = req.query;
-
-    const params = [
-      'VIEW_PROJECT_ROLE',
-      ITEM ?? null,
-      RECORD_SYS_ID ?? null,
-      ORGANIZATION_SYS_ID ?? null
-    ];
-
-    const [rows] = await conn.execute(
-      "CALL USP_GET_ALL_MASTER_DATA(?, ?, ?, ?, @ERRNO, @ERRMSG);",
-      params
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-  finally {
-    if (conn) conn.release();
-  }
-});
-
-// POST /api/master/api-post-add-update-master-organization
-/**
- * @swagger
- * /api/master/api-post-add-update-master-organization:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/api-post-add-update-master-organization', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_ORGANIZATION', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// GET /api/master/api-get-view-master-organization
-/**
- * @swagger
- * /api/master/api-get-view-master-organization:
- *   get:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ITEM
- *         schema:
- *           type: string
- *         required: false
- *         example: VIEW_ALL
- *       - in: query
- *         name: RECORD_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *       - in: query
- *         name: ORGANIZATION_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *     responses:
- *       200:
- *         description: JSON response from stored procedure
- */
-router.get('/api-get-view-master-organization', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const { ITEM,RECORD_SYS_ID = null,ORGANIZATION_SYS_ID = null} = req.query;
-    const [rows] = await conn.execute(
-      "CALL USP_GET_ALL_MASTER_DATA(?, ?, ?, ?,@ERRNO, @ERRMSG);",
-      ['VIEW_ORGANIZATION', ITEM,RECORD_SYS_ID,ORGANIZATION_SYS_ID]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong'});
-    }
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// GET /api/master/api-get-view-master-lucky-draw-type
-/**
- * @swagger
- * /api/master/api-get-view-master-lucky-draw-type:
- *   get:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ITEM
- *         schema:
- *           type: string
- *         required: false
- *         example: VIEW_ALL
- *       - in: query
- *         name: RECORD_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *       - in: query
- *         name: ORGANIZATION_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *     responses:
- *       200:
- *         description: JSON response from stored procedure
- */
-router.get('/api-get-view-master-lucky-draw-type', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const { ITEM, RECORD_SYS_ID, ORGANIZATION_SYS_ID } = req.query;
-
-    const params = [
-      'VIEW_LUCKY_DRAW_TYPE',
-      ITEM ?? null,
-      RECORD_SYS_ID ?? null,
-      ORGANIZATION_SYS_ID ?? null
-    ];
-
-    const [rows] = await conn.execute(
-      "CALL USP_GET_ALL_MASTER_DATA(?, ?, ?, ?, @ERRNO, @ERRMSG);",
-      params
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-  finally {
-    if (conn) conn.release();
-  }
-});
-
-// GET /api/master/api-get-view-master-sub-lucky-draw-type
-/**
- * @swagger
- * /api/master/api-get-view-master-sub-lucky-draw-type:
- *   get:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ITEM
- *         schema:
- *           type: string
- *         required: false
- *         example: VIEW_ALL
- *       - in: query
- *         name: RECORD_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *       - in: query
- *         name: ORGANIZATION_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *     responses:
- *       200:
- *         description: JSON response from stored procedure
- */
-router.get('/api-get-view-master-sub-lucky-draw-type', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const { ITEM,RECORD_SYS_ID,ORGANIZATION_SYS_ID} = req.query;
-    const [rows] = await conn.execute(
-      "CALL USP_GET_ALL_MASTER_DATA(?, ?, ?, ?,@ERRNO, @ERRMSG);",
-      ['VIEW_SUB_LUCKY_DRAW_TYPE', ITEM,RECORD_SYS_ID,ORGANIZATION_SYS_ID]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong'});
-    }
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// POST /api/master/api-post-add-update-master-lucky-draw-type
-/**
- * @swagger
- * /api/master/api-post-add-update-master-lucky-draw-type:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/api-post-add-update-master-lucky-draw-type', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_LUCKY_DRAW_TYPE', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// POST /api/master/api-post-add-update-master-sub-lucky-draw-type
-/**
- * @swagger
- * /api/master/api-post-add-update-master-sub-lucky-draw-type:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/api-post-add-update-master-sub-lucky-draw-type', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_SUB_LUCKY_DRAW_TYPE', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// POST /api/master/api-post-add-update-master-lucky
-/**
- * @swagger
- * /api/master/api-post-add-update-master-lucky:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/api-post-add-update-master-lucky', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_ALL_MASTER_DATA(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_SUB_LUCKY_DRAW_TYPE', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// POST /api/master/api-post-add-update-event-smtp-credentials
-/**
- * @swagger
- * /api/master/api-post-add-update-event-smtp-credentials:
- *   post:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: array
- *             items:
- *               type: object
- *     responses:
- *       200:
- *         description: Success Response
- */
-router.post('/api-post-add-update-event-smtp-credentials', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const requestJson = JSON.stringify(req.body); // Convert request body to JSON string
-    const [rows] = await conn.execute(
-      "CALL USP_POST_EVENT_SMTP_CREDENTIALS_ACTIVITY(?, ?, @ERRNO, @ERRMSG);",
-      ['ADD_UPDATE_SMTP_CREDENTIALS', requestJson]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
-
-// GET /api/master/api-get-specific-event-wise-smtp-credentials-info
-/**
- * @swagger
- * /api/master/api-get-specific-event-wise-smtp-credentials-info:
- *   get:
- *     tags:
- *       - Master
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: ITEM
- *         schema:
- *           type: string
- *         required: false
- *         example: VIEW_ALL
- *       - in: query
- *         name: EVENT_SYS_ID
- *         schema:
- *           type: string
- *         required: false
- *         example: 0
- *     responses:
- *       200:
- *         description: JSON response from stored procedure
- */
-router.get('/api-get-specific-event-wise-smtp-credentials-info', auth, async (req, res) => {
-  let conn;
-  try {
-    conn = await db.getConnection();
-    const { ITEM,EVENT_SYS_ID} = req.query;
-    const [rows] = await conn.execute(
-      "CALL USP_GET_SPECIFIC_EVENT_WISE_SMTP_CREDENTIALS_ACTIVITY(?, ?, ?,@ERRNO, @ERRMSG);",
-      ['VIEW_SMTP_CREDENTIALS', ITEM,EVENT_SYS_ID]
-    );
-    if (rows && rows[0] && rows[0][0]) {
-      const result = rows[0][0].JSON_VALUE;
-      return res.json(result);
-    } else {
-      return res.status(500).json({ status: 'false', response: 'Oops!! something went wrong'});
-    }
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-    finally {
-    if (conn) conn.release();
-  }
-});
 module.exports = router;

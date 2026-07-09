@@ -18,6 +18,7 @@ connected correctly.
   - `routes/user.js`
   - `routes/customer.js`
   - `routes/project.js`
+  - `routes/master.js`
   - `routes/health.js`
   - `middlewares/auth.js`
   - `utils/procedureResponse.js`
@@ -118,6 +119,7 @@ node --check routes\auth.js
 node --check routes\user.js
 node --check routes\customer.js
 node --check routes\project.js
+node --check routes\master.js
 node --check routes\health.js
 node --check middlewares\auth.js
 node --check utils\procedureResponse.js
@@ -142,11 +144,14 @@ Verify:
 
 - Database name is `DEV_CITY_SURVEY`
 - Procedure `USP_POST_USER_AUTHENTICATE_ACTIVITY` exists
+- Procedure `USP_GET_USER_LIST_ACTIVITY` exists
 - Procedure `USP_POST_USER_PROFILE_ACTIVITY` exists
 - Procedure `USP_GET_LIST_CUSTOMER_ACTIVITY` exists
 - Procedure `USP_POST_CUSTOMER_DETAILS_ACTIVITY` exists
 - Procedure `USP_GET_LIST_PROJECT_ACTIVITY` exists
 - Procedure `USP_POST_PROJECT_ACTIVITY` exists
+- Procedure `USP_GET_ALL_MASTER_DATA` exists
+- Procedure `USP_POST_ALL_MASTER_DATA` exists
 - Sample auth call returns `status: true`
 
 Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.txt).
@@ -157,16 +162,19 @@ Verify with Swagger:
 
 - Health API returns status at `/health`
 - Swagger opens at `/api/api-docs`
-- Swagger shows all five tags: `Health`, `Auth`, `User`, `Customer`, and
-  `Project`
+- Swagger shows all six tags: `Health`, `Auth`, `User`, `Customer`, `Project`,
+  and `Master`
 - Swagger "Try it out" calls the same host and port where Swagger is opened
   because the OpenAPI server URL is relative `/`.
 - Auth API returns token for sample user
+- Protected user list API returns `VIEW_ALL` response
 - Protected user API accepts the token
 - Protected customer list API returns `VIEW_ALL` response
 - Protected customer API validates payload when token is provided
 - Protected project list API returns `VIEW_ALL` response
 - Protected project API validates payload when token is provided
+- Protected system-role list API returns `VIEW_ALL` response
+- Protected system-role API validates payload when token is provided
 - Duplicate sample email returns `This Email Id Already Exists`
 
 ## 9. Dev Server Process Checklist
@@ -209,6 +217,8 @@ Then run:
    response.
 4. Project validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `CUSTOMER_SYS_ID is required`.
+5. System-role validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+   `RECORD_SYS_ID is required`.
 
 ## 11. Rollback Checklist
 
@@ -226,5 +236,5 @@ If deployment fails:
 - During local testing on 2026-07-08, port `3000` was already occupied by a
   separate `node` process. The local City Survey `.env` now uses port `3103`.
 - The add/update stored procedure commits internally, so avoid write tests with
-  new email addresses, full customer payloads, or full project payloads unless
-  the team approves creating dev DB records.
+  new email addresses, full customer payloads, full project payloads, or full
+  system-role payloads unless the team approves creating dev DB records.

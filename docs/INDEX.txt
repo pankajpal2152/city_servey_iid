@@ -20,11 +20,14 @@ Survey Node.js API scope.
 
 - `GET /health`
 - `POST /api/auth/api-post-authenticate-user`
+- `GET /api/user/api-get-view-user-list-info`
 - `POST /api/user/api-post-add-update-user`
 - `GET /api/customer/api-get-view-list-customer-details`
 - `POST /api/customer/api-post-add-update-customer-details`
 - `GET /api/project/api-get-view-list-project-details`
 - `POST /api/project/api-post-add-update-project`
+- `GET /api/master/api-get-view-master-system-roles`
+- `POST /api/master/api-post-add-update-master-system-role`
 
 ## Current Active Route Files
 
@@ -32,6 +35,7 @@ Survey Node.js API scope.
 - `routes/user.js`
 - `routes/customer.js`
 - `routes/project.js`
+- `routes/master.js`
 - `routes/health.js`
 
 ## Current Local Runtime
@@ -41,7 +45,7 @@ Survey Node.js API scope.
 - Swagger server config: relative `/`, so "Try it out" calls the same host and
   port where Swagger is opened.
 - Browser Swagger tags that must be visible: `Health`, `Auth`, `User`,
-  `Customer`, and `Project`.
+  `Customer`, `Project`, and `Master`.
 
 ## Current Dev Server Runtime
 

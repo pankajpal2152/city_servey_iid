@@ -9,9 +9,9 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const customerRoutes = require('./routes/customer');
 const projectRoutes = require('./routes/project');
+const masterRoutes = require('./routes/master');
 const healthRoutes = require('./routes/health');
-// City Survey currently uses auth, user, customer, project, and health routes.
-// const masterRoutes = require('./routes/master');
+// City Survey currently uses auth, user, customer, project, master system role, and health routes.
 // const eventRoutes = require('./routes/event');
 // const attendeesportalRoutes = require('./routes/attendeesportal');
 // const fileuploaddownloadRoutes = require('./routes/fileuploaddownload');
@@ -40,8 +40,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/project', projectRoutes);
+app.use('/api/master', masterRoutes);
 app.use('/health', healthRoutes);
-// app.use('/api/master', masterRoutes);
 // app.use('/api/event', eventRoutes);
 // app.use('/api/attendeesportal', attendeesportalRoutes);
 // app.use('/api/file', fileuploaddownloadRoutes);

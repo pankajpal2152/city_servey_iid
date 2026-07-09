@@ -45,11 +45,14 @@ http://localhost:3104
 | --- | --- | --- | --- |
 | Health check | GET | `/health` | No |
 | User login | POST | `/api/auth/api-post-authenticate-user` | No |
+| View user list | GET | `/api/user/api-get-view-user-list-info` | Yes |
 | Add/update user | POST | `/api/user/api-post-add-update-user` | Yes |
 | View customer list | GET | `/api/customer/api-get-view-list-customer-details` | Yes |
 | Add/update customer details | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
 | View project list | GET | `/api/project/api-get-view-list-project-details` | Yes |
 | Add/update project | POST | `/api/project/api-post-add-update-project` | Yes |
+| View system roles | GET | `/api/master/api-get-view-master-system-roles` | Yes |
+| Add/update system role | POST | `/api/master/api-post-add-update-master-system-role` | Yes |
 
 ## Health Check Integration
 
@@ -155,6 +158,33 @@ Recommended UI behavior:
 - If API returns 401, redirect user to login.
 - If API returns 403, clear token and redirect user to login.
 - Do not send protected API requests without token.
+
+## View User List Integration
+
+### Request
+
+```http
+GET /api/user/api-get-view-user-list-info?ITEM=VIEW_ALL
+Authorization: Bearer <Token>
+```
+
+`ITEM` is optional. If it is omitted, the backend sends `VIEW_ALL` to the stored
+procedure.
+
+### Expected Response Shape
+
+The response comes from `USP_GET_USER_LIST_ACTIVITY`. UI should use the
+`response` field when `status` is `true`.
+
+```json
+{
+  "status": "true",
+  "response": []
+}
+```
+
+Use this API to populate user tables, user management screens, and user
+dropdowns when needed.
 
 ## Add/Update User Integration
 
@@ -379,6 +409,71 @@ Body:
 The project API accepts the object shape provided by the database developer.
 Running the full sample creates or updates project records in the dev database.
 
+## View System Roles Integration
+
+### Request
+
+```http
+GET /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+Authorization: Bearer <Token>
+```
+
+`ITEM` is optional. If it is omitted, the backend sends `VIEW_ALL` to the stored
+procedure. `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` are optional filters.
+
+### Expected Response Shape
+
+The response comes from `USP_GET_ALL_MASTER_DATA`. UI should use the `response`
+field when `status` is `true`.
+
+```json
+{
+  "status": "true",
+  "response": []
+}
+```
+
+Use this API to populate role dropdowns and system-role management screens.
+
+## Add/Update System Role Integration
+
+### Request
+
+```http
+POST /api/master/api-post-add-update-master-system-role
+Content-Type: application/json
+Authorization: Bearer <Token>
+```
+
+Body:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "ORGANIZATION_SYS_ID": "1",
+  "SYSTEM_ROLE": "Business Admin",
+  "ROLE_DESC": "Business Admin",
+  "USER_TYPE": "Internal",
+  "CREATED_BY": 1
+}
+```
+
+### System Role Field Mapping
+
+| UI Field | Payload Key | Required for Add | Suggested UI Validation |
+| --- | --- | --- | --- |
+| Action | `ITEM` | Yes | Use `ADD` for create. Confirm update value with backend/DB team. |
+| Role record id | `RECORD_SYS_ID` | Yes | Use `"0"` for add. Existing role id for update. |
+| Organization | `ORGANIZATION_SYS_ID` | Yes | Use selected organization id. |
+| System role | `SYSTEM_ROLE` | Yes | Required, trim whitespace. |
+| Role description | `ROLE_DESC` | Yes | Required, allow same value as role name if no separate description. |
+| User type | `USER_TYPE` | Yes | Controlled value, for example `Internal`. |
+| Created by | `CREATED_BY` | Yes | Use logged-in user's `USER_SYS_ID` when available. |
+
+Running the full sample creates or updates system role records in the dev
+database.
+
 ## JavaScript Fetch Example
 
 ```javascript
@@ -396,6 +491,34 @@ export async function login(userName, password) {
   if (!response.ok) {
     throw new Error(data.response || data.error || 'Login failed');
   }
+
+  return data;
+}
+
+export async function getUserList(token, item = 'VIEW_ALL') {
+  const response = await fetch(`${baseUrl}/api/user/api-get-view-user-list-info?ITEM=${encodeURIComponent(item)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'User list failed');
+  }
+
+  return data;
+}
+
+export async function getUserList(token, item = 'VIEW_ALL') {
+  const { data } = await api.get('/api/user/api-get-view-user-list-info', {
+    params: { ITEM: item },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   return data;
 }
@@ -490,6 +613,42 @@ export async function addProject(token, payload) {
 
   return data;
 }
+
+export async function getSystemRoles(token, item = 'VIEW_ALL') {
+  const response = await fetch(`${baseUrl}/api/master/api-get-view-master-system-roles?ITEM=${encodeURIComponent(item)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'System role list failed');
+  }
+
+  return data;
+}
+
+export async function addSystemRole(token, payload) {
+  const response = await fetch(`${baseUrl}/api/master/api-post-add-update-master-system-role`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'System role save failed');
+  }
+
+  return data;
+}
 ```
 
 ## Axios Example
@@ -560,6 +719,27 @@ export async function addProject(token, payload) {
 
   return data;
 }
+
+export async function getSystemRoles(token, item = 'VIEW_ALL') {
+  const { data } = await api.get('/api/master/api-get-view-master-system-roles', {
+    params: { ITEM: item },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function addSystemRole(token, payload) {
+  const { data } = await api.post('/api/master/api-post-add-update-master-system-role', payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
 ```
 
 ## Suggested UI Pages
@@ -593,6 +773,7 @@ Fields:
 Behavior:
 
 - Require login token.
+- Load existing users with the user list API.
 - Send payload to add/update API.
 - Show success or failure message from `response`.
 - For demo, use existing sample email to show duplicate validation safely.
@@ -636,6 +817,24 @@ Behavior:
 - During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team
   approves creating project records in the dev database.
 
+### System Role Management Page
+
+Fields:
+
+- Organization
+- System role
+- Role description
+- User type
+
+Behavior:
+
+- Require login token.
+- Load existing system roles with the system-role list API.
+- Send payload to system role add/update API.
+- Show success or failure message from `response`.
+- During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team
+  approves creating system role records in the dev database.
+
 ## Frontend Demo Flow
 
 1. Open login page.
@@ -651,6 +850,8 @@ Behavior:
 9. Submit validation-only sample or approved full customer sample.
 10. Open project form.
 11. Submit validation-only sample or approved full project sample.
+12. Open system role form.
+13. Submit validation-only sample or approved full system role sample.
 
 ## Open Questions for UI Team
 
@@ -662,6 +863,7 @@ Behavior:
 - What is the final update/delete customer contract?
 - What is the final update/delete project contract?
 - What APIs will provide surveyor, survey type, and property type dropdowns?
+- What is the final update/delete system role contract?
 - Should the UI support logout and token expiry messaging in this phase?
 
 ## Do Not Do
@@ -671,4 +873,5 @@ Behavior:
 - Do not create users with random real emails during demos unless approved.
 - Do not create customer/PIC records during demos unless approved.
 - Do not create project records during demos unless approved.
+- Do not create system role records during demos unless approved.
 - Do not assume old event or attendee APIs are active for City Survey.

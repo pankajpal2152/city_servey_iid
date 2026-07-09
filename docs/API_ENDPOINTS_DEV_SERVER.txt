@@ -39,31 +39,37 @@ Body:
   }
 ]
 
-3. Add or Update User
+3. View User List
+Method: GET
+URL: https://api-dev.citysurveyors.com.sg/api/user/api-get-view-user-list-info?ITEM=VIEW_ALL
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
+4. Add or Update User
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/user/api-post-add-update-user
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-4. View Customer List
+5. View Customer List
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-5. Add or Update Customer Details
+6. Add or Update Customer Details
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-6. View Project List
+7. View Project List
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-7. Add or Update Project
+8. Add or Update Project
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
 Auth Required: Yes
@@ -80,15 +86,40 @@ Body:
   "CREATED_BY": 1
 }
 
+9. View Master System Roles
+Method: GET
+URL: https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
+10. Add or Update Master System Role
+Method: POST
+URL: https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-system-role
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+Body:
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "ORGANIZATION_SYS_ID": "1",
+  "SYSTEM_ROLE": "Business Admin",
+  "ROLE_DESC": "Business Admin",
+  "USER_TYPE": "Internal",
+  "CREATED_BY": 1
+}
+
 RELATIVE PATHS FOR FRONTEND API CLIENT
 
 GET  /health
 POST /api/auth/api-post-authenticate-user
+GET  /api/user/api-get-view-user-list-info?ITEM=VIEW_ALL
 POST /api/user/api-post-add-update-user
 GET  /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
 POST /api/customer/api-post-add-update-customer-details
 GET  /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 POST /api/project/api-post-add-update-project
+GET  /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+POST /api/master/api-post-add-update-master-system-role
 
 NOTES
 
@@ -97,4 +128,6 @@ NOTES
 - Login response returns the JWT in the field named Token.
 - Send Authorization: Bearer <Token> only after successful login.
 - The full project payload is a write operation and may create dev DB records.
-- Full request/response examples are available in docs/API_URLS.md.
+- The full master system role payload is a write operation and may create dev
+  DB records.
+- Full request/response examples are available in docs/API_URLS.txt.

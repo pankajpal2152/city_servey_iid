@@ -7,11 +7,14 @@ Date: 2026-07-09
 The City Survey backend currently exposes the following active APIs:
 
 - Authenticate a user through `USP_POST_USER_AUTHENTICATE_ACTIVITY`
+- View list user info through `USP_GET_USER_LIST_ACTIVITY`
 - Add or update a user through `USP_POST_USER_PROFILE_ACTIVITY`
 - Add or update customer details through `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
 - View list customer details through `USP_GET_LIST_CUSTOMER_ACTIVITY`
 - View list project details through `USP_GET_LIST_PROJECT_ACTIVITY`
 - Add or update project through `USP_POST_PROJECT_ACTIVITY`
+- View master system roles through `USP_GET_ALL_MASTER_DATA`
+- Add or update master system role through `USP_POST_ALL_MASTER_DATA`
 - Check API process health through `GET /health`
 
 All other legacy event, attendee, payment, file upload, and email modules are
@@ -24,14 +27,15 @@ not mounted in `index.js` for this City Survey phase.
 | App entry | `index.js` | Creates Express app, configures JSON parsing, CORS, routes, Swagger, and server port | Active |
 | Database pool | `config/db.js` | Creates MySQL pool from `.env` values | Active |
 | Auth route | `routes/auth.js` | Handles user authentication, calls auth stored procedure, signs JWT | Active |
-| User route | `routes/user.js` | Handles add/update user, calls profile stored procedure | Active |
+| User route | `routes/user.js` | Handles user list view plus add/update user, calls user stored procedures | Active |
 | Customer route | `routes/customer.js` | Handles customer list view plus add/update customer details and PIC records | Active |
 | Project route | `routes/project.js` | Handles project list view plus add/update project, calls project stored procedures | Active |
+| Master route | `routes/master.js` | Handles system-role master list view plus add/update system role | Active |
 | Health route | `routes/health.js` | Returns a lightweight API status response without JWT or DB calls | Active |
 | JWT middleware | `middlewares/auth.js` | Validates `Authorization: Bearer <token>` before protected APIs | Active |
 | Procedure helper | `utils/procedureResponse.js` | Normalizes stored procedure `JSON_VALUE` responses | Active |
 | Swagger config | `docs/swagger.js` | Builds Swagger docs only for active City Survey routes | Active |
-| Legacy routes | `routes/event.js`, `routes/master.js`, `routes/payment.js`, and others | Old iideas/event application APIs | Not mounted |
+| Legacy routes | `routes/event.js`, `routes/payment.js`, and others | Old iideas/event application APIs | Not mounted |
 
 ## Current Runtime Configuration
 
@@ -55,48 +59,62 @@ flowchart LR
   UserRoute["User Route - routes/user.js"]
   CustomerRoute["Customer Route - routes/customer.js"]
   ProjectRoute["Project Route - routes/project.js"]
+  MasterRoute["Master Route - routes/master.js"]
   HealthRoute["Health Route - routes/health.js"]
   Jwt["JWT Middleware - middlewares/auth.js"]
   Helper["Procedure Response Helper"]
   Pool["MySQL Pool - config/db.js"]
   DB["RDS MySQL - DEV_CITY_SURVEY"]
   AuthSP["USP_POST_USER_AUTHENTICATE_ACTIVITY"]
+  UserListSP["USP_GET_USER_LIST_ACTIVITY"]
   UserSP["USP_POST_USER_PROFILE_ACTIVITY"]
   CustomerSP["USP_POST_CUSTOMER_DETAILS_ACTIVITY"]
   CustomerListSP["USP_GET_LIST_CUSTOMER_ACTIVITY"]
   ProjectListSP["USP_GET_LIST_PROJECT_ACTIVITY"]
   ProjectSP["USP_POST_PROJECT_ACTIVITY"]
+  MasterListSP["USP_GET_ALL_MASTER_DATA"]
+  MasterPostSP["USP_POST_ALL_MASTER_DATA"]
 
   UI --> Express
   Express --> AuthRoute
   Express --> UserRoute
   Express --> CustomerRoute
   Express --> ProjectRoute
+  Express --> MasterRoute
   Express --> HealthRoute
   UserRoute --> Jwt
   CustomerRoute --> Jwt
   ProjectRoute --> Jwt
+  MasterRoute --> Jwt
   AuthRoute --> Pool
   UserRoute --> Pool
   CustomerRoute --> Pool
   ProjectRoute --> Pool
+  MasterRoute --> Pool
   Pool --> DB
   DB --> AuthSP
+  DB --> UserListSP
   DB --> UserSP
   DB --> CustomerSP
   DB --> CustomerListSP
   DB --> ProjectListSP
   DB --> ProjectSP
+  DB --> MasterListSP
+  DB --> MasterPostSP
   AuthSP --> Helper
+  UserListSP --> Helper
   UserSP --> Helper
   CustomerSP --> Helper
   CustomerListSP --> Helper
   ProjectListSP --> Helper
   ProjectSP --> Helper
+  MasterListSP --> Helper
+  MasterPostSP --> Helper
   Helper --> AuthRoute
   Helper --> UserRoute
   Helper --> CustomerRoute
   Helper --> ProjectRoute
+  Helper --> MasterRoute
 ```
 
 ## Request Flow: Health Check
@@ -172,6 +190,47 @@ The API also maps older frontend-style keys:
 - `email` to `USER_NAME`
 - `EMAIL_ID` to `USER_NAME`
 - `password` to `PASSWORD`
+
+## Request Flow: View User List Info
+
+Endpoint:
+
+`GET /api/user/api-get-view-user-list-info`
+
+Stored procedure:
+
+`USP_GET_USER_LIST_ACTIVITY('VIEW_USER', P_ITEM, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express User API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as User List Stored Procedure
+
+  UI->>API: GET user list with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Use ITEM query value or default VIEW_ALL
+  API->>DB: CALL USP_GET_USER_LIST_ACTIVITY
+  DB->>SP: Fetch user list details
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: User list JSON
+```
+
+Default query behavior:
+
+```text
+GET /api/user/api-get-view-user-list-info
+```
+
+is treated as:
+
+```text
+GET /api/user/api-get-view-user-list-info?ITEM=VIEW_ALL
+```
 
 ## Request Flow: Add or Update User
 
@@ -409,6 +468,98 @@ The API accepts the object shape provided by the database developer:
 If a client accidentally sends a one-item array, the backend unwraps the first
 object before calling the stored procedure.
 
+## Request Flow: View Master System Roles
+
+Endpoint:
+
+`GET /api/master/api-get-view-master-system-roles`
+
+Stored procedure:
+
+`USP_GET_ALL_MASTER_DATA('VIEW_SYSTEM_ROLE', P_ITEM, P_RECORD_SYS_ID, P_ORGANIZATION_SYS_ID, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Master API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Master Data Stored Procedure
+
+  UI->>API: GET system role list with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Use ITEM query value or default VIEW_ALL
+  API->>API: Use optional RECORD_SYS_ID and ORGANIZATION_SYS_ID filters
+  API->>DB: CALL USP_GET_ALL_MASTER_DATA
+  DB->>SP: Fetch system role master data
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: System role list JSON
+```
+
+Default query behavior:
+
+```text
+GET /api/master/api-get-view-master-system-roles
+```
+
+is treated as:
+
+```text
+GET /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+```
+
+Missing `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` values are sent as `NULL`.
+
+## Request Flow: Add or Update Master System Role
+
+Endpoint:
+
+`POST /api/master/api-post-add-update-master-system-role`
+
+Stored procedure:
+
+`USP_POST_ALL_MASTER_DATA('ADD_UPDATE_SYSTEM_ROLE', P_JSON, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Master API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Master Data Stored Procedure
+
+  UI->>API: POST system role payload with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Validate ITEM and required ADD fields
+  API->>DB: CALL USP_POST_ALL_MASTER_DATA
+  DB->>SP: Add/update system role logic
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Procedure response JSON
+```
+
+### System Role Payload Shape
+
+The API accepts the object shape provided by the database developer:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "ORGANIZATION_SYS_ID": "1",
+  "SYSTEM_ROLE": "Business Admin",
+  "ROLE_DESC": "Business Admin",
+  "USER_TYPE": "Internal",
+  "CREATED_BY": 1
+}
+```
+
+If a client accidentally sends a one-item array, the backend unwraps the first
+object before calling the stored procedure.
+
 ## Scenario Matrix
 
 | Scenario | API | Input | Expected Result |
@@ -416,6 +567,7 @@ object before calling the stored procedure.
 | Successful login | `POST /api/auth/api-post-authenticate-user` | Valid `USER_NAME` and `PASSWORD` | HTTP 200, `Token`, `status: true` |
 | Missing login fields | `POST /api/auth/api-post-authenticate-user` | `{}` | HTTP 400, `USER_NAME and PASSWORD are required` |
 | Invalid credentials | `POST /api/auth/api-post-authenticate-user` | Wrong password | HTTP 401 with DB response |
+| View user list | `GET /api/user/api-get-view-user-list-info` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, user list response |
 | Add existing user | `POST /api/user/api-post-add-update-user` | Existing `EMAIL_ID`, valid token | HTTP 200, DB response such as `This Email Id Already Exists` |
 | Add new user | `POST /api/user/api-post-add-update-user` | Unique `EMAIL_ID`, valid token | HTTP 200, DB success response, new dev DB row |
 | Missing bearer token | `POST /api/user/api-post-add-update-user` | No `Authorization` header | HTTP 401 |
@@ -427,6 +579,9 @@ object before calling the stored procedure.
 | View project list | `GET /api/project/api-get-view-list-project-details` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, project list response |
 | Add project | `POST /api/project/api-post-add-update-project` | Valid project payload, valid token | HTTP 200, DB response, project records may be created |
 | Missing project fields | `POST /api/project/api-post-add-update-project` | Missing required ADD field, valid token | HTTP 400 with validation response |
+| View system roles | `GET /api/master/api-get-view-master-system-roles` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, system role list response |
+| Add system role | `POST /api/master/api-post-add-update-master-system-role` | Valid system role payload, valid token | HTTP 200, DB response, system role records may be created |
+| Missing system role fields | `POST /api/master/api-post-add-update-master-system-role` | Missing required ADD field, valid token | HTTP 400 with validation response |
 | Health check | `GET /health` | No body | HTTP 200, API status JSON |
 | DB unavailable | Any DB-backed API | RDS/network issue | HTTP 500 with error message |
 
@@ -439,15 +594,18 @@ Backend owns:
 - Request payload normalization
 - Stored procedure invocation
 - Procedure response normalization
+- User list and add/update payload handling
 - Customer payload validation before DB call
 
 Database owns:
 
 - Credential validation
+- User list query rules
 - User existence validation
 - User insert/update rules
 - Role and organization references
 - Project insert/update rules
+- System role insert/update rules
 - Stored procedure response messages
 
 Frontend owns:
@@ -457,6 +615,7 @@ Frontend owns:
 - Add/update user form validation
 - Add/update customer form validation
 - Add/update project form validation
+- Add/update system role form validation
 - Displaying backend and DB response messages
 
 ## Inactive Legacy Code

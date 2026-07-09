@@ -61,11 +61,14 @@ response field named `Token`.
 | -------- | ------ | ------------------------------------------------------------------------------------------------------ | ------------- |
 | Health   | GET    | `https://api-dev.citysurveyors.com.sg/health`                                                        | No            |
 | Auth     | POST   | `https://api-dev.citysurveyors.com.sg/api/auth/api-post-authenticate-user`                           | No            |
+| User     | GET    | `https://api-dev.citysurveyors.com.sg/api/user/api-get-view-user-list-info?ITEM=VIEW_ALL`            | Yes           |
 | User     | POST   | `https://api-dev.citysurveyors.com.sg/api/user/api-post-add-update-user`                             | Yes           |
 | Customer | GET    | `https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL` | Yes           |
 | Customer | POST   | `https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details`             | Yes           |
 | Project  | GET    | `https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`   | Yes           |
 | Project  | POST   | `https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project`                       | Yes           |
+| Master   | GET    | `https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL`     | Yes           |
+| Master   | POST   | `https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-system-role`             | Yes           |
 
 ## Relative API Paths
 
@@ -75,11 +78,14 @@ base URL configured:
 ```text
 GET  /health
 POST /api/auth/api-post-authenticate-user
+GET  /api/user/api-get-view-user-list-info?ITEM=VIEW_ALL
 POST /api/user/api-post-add-update-user
 GET  /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
 POST /api/customer/api-post-add-update-customer-details
 GET  /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 POST /api/project/api-post-add-update-project
+GET  /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+POST /api/master/api-post-add-update-master-system-role
 ```
 
 ## 1. Health Check
@@ -126,7 +132,27 @@ Frontend usage:
 - Store the token according to the frontend project's auth pattern.
 - Send `Authorization: Bearer <Token>` for protected APIs.
 
-## 3. Add or Update User
+## 3. View User List
+
+```text
+GET https://api-dev.citysurveyors.com.sg/api/user/api-get-view-user-list-info?ITEM=VIEW_ALL
+```
+
+Auth required: Yes
+
+Query parameter:
+
+| Name     | Required | Default      | Example      |
+| -------- | -------- | ------------ | ------------ |
+| `ITEM` | No       | `VIEW_ALL` | `VIEW_ALL` |
+
+Frontend usage:
+
+```js
+const url = `${API_BASE_URL}/api/user/api-get-view-user-list-info?ITEM=VIEW_ALL`;
+```
+
+## 4. Add or Update User
 
 ```text
 POST https://api-dev.citysurveyors.com.sg/api/user/api-post-add-update-user
@@ -152,7 +178,7 @@ Request body:
 }
 ```
 
-## 4. View Customer List
+## 5. View Customer List
 
 ```text
 GET https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
@@ -172,7 +198,7 @@ Frontend usage:
 const url = `${API_BASE_URL}/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL`;
 ```
 
-## 5. Add or Update Customer Details
+## 6. Add or Update Customer Details
 
 ```text
 POST https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details
@@ -210,7 +236,7 @@ Request body:
 
 Running this sample with a valid token may create records in the dev database.
 
-## 6. View Project List
+## 7. View Project List
 
 ```text
 GET https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
@@ -230,7 +256,7 @@ Frontend usage:
 const url = `${API_BASE_URL}/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`;
 ```
 
-## 7. Add or Update Project
+## 8. Add or Update Project
 
 ```text
 POST https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
@@ -255,6 +281,52 @@ Request body:
 
 Running this sample with a valid token may create records in the dev database.
 
+## 9. View Master System Roles
+
+```text
+GET https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+```
+
+Auth required: Yes
+
+Query parameters:
+
+| Name | Required | Default | Example |
+| --- | --- | --- | --- |
+| `ITEM` | No | `VIEW_ALL` | `VIEW_ALL` |
+| `RECORD_SYS_ID` | No | `null` | `1` |
+| `ORGANIZATION_SYS_ID` | No | `null` | `1` |
+
+Frontend usage:
+
+```js
+const url = `${API_BASE_URL}/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL`;
+```
+
+## 10. Add or Update Master System Role
+
+```text
+POST https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-system-role
+```
+
+Auth required: Yes
+
+Request body:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "ORGANIZATION_SYS_ID": "1",
+  "SYSTEM_ROLE": "Business Admin",
+  "ROLE_DESC": "Business Admin",
+  "USER_TYPE": "Internal",
+  "CREATED_BY": 1
+}
+```
+
+Running this sample with a valid token may create records in the dev database.
+
 ## Swagger Visibility Checklist
 
 The dev Swagger URL should show these tags:
@@ -264,16 +336,20 @@ The dev Swagger URL should show these tags:
 - `User`
 - `Customer`
 - `Project`
+- `Master`
 
 The dev Swagger URL should show these API paths:
 
 - `GET /health`
 - `POST /api/auth/api-post-authenticate-user`
+- `GET /api/user/api-get-view-user-list-info`
 - `POST /api/user/api-post-add-update-user`
 - `GET /api/customer/api-get-view-list-customer-details`
 - `POST /api/customer/api-post-add-update-customer-details`
 - `GET /api/project/api-get-view-list-project-details`
 - `POST /api/project/api-post-add-update-project`
+- `GET /api/master/api-get-view-master-system-roles`
+- `POST /api/master/api-post-add-update-master-system-role`
 
 After deployment, verify the Swagger list at:
 

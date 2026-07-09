@@ -6,7 +6,7 @@ const options = {
     info: {
       title: 'City Survey Node.js API',
       version: '1.0.0',
-      description: 'Backend APIs for City Survey health, authentication, user, customer, and project modules',
+      description: 'Backend APIs for City Survey health, authentication, user, customer, project, and master modules',
     },
     tags: [
       {
@@ -19,7 +19,7 @@ const options = {
       },
       {
         name: 'User',
-        description: 'City Survey user profile add/update APIs'
+        description: 'City Survey user list and profile add/update APIs'
       },
       {
         name: 'Customer',
@@ -28,6 +28,10 @@ const options = {
       {
         name: 'Project',
         description: 'City Survey project list and add/update APIs'
+      },
+      {
+        name: 'Master',
+        description: 'City Survey system role master list and add/update APIs'
       }
     ],
     components: {
@@ -42,7 +46,7 @@ const options = {
     security: [{ bearerAuth: [] }],
     servers: [{ url: '/', description: 'Current API server' }]
   },
-  apis: ['./routes/auth.js', './routes/user.js', './routes/customer.js', './routes/project.js', './routes/health.js']
+  apis: ['./routes/auth.js', './routes/user.js', './routes/customer.js', './routes/project.js', './routes/master.js', './routes/health.js']
 };
 
 module.exports = swaggerJsdoc(options);

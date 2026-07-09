@@ -17,6 +17,9 @@ Completed items:
 - Implemented active add/update user API:
   - `POST /api/user/api-post-add-update-user`
   - Procedure: `USP_POST_USER_PROFILE_ACTIVITY`
+- Implemented active user list info API:
+  - `GET /api/user/api-get-view-user-list-info`
+  - Procedure: `USP_GET_USER_LIST_ACTIVITY`
 - Implemented active add/update customer details API:
   - `POST /api/customer/api-post-add-update-customer-details`
   - Procedure: `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
@@ -29,13 +32,20 @@ Completed items:
 - Implemented active project list details API:
   - `GET /api/project/api-get-view-list-project-details`
   - Procedure: `USP_GET_LIST_PROJECT_ACTIVITY`
+- Implemented active master system role list API:
+  - `GET /api/master/api-get-view-master-system-roles`
+  - Procedure: `USP_GET_ALL_MASTER_DATA`
+- Implemented active add/update master system role API:
+  - `POST /api/master/api-post-add-update-master-system-role`
+  - Procedure: `USP_POST_ALL_MASTER_DATA`
 - Merged senior developer health API:
   - `GET /health`
   - Route: `routes/health.js`
 - Added JWT generation for successful authentication.
-- Added JWT protection for add/update user and customer details.
+- Added JWT protection for user list, add/update user, and customer details.
 - Added JWT protection for add/update project.
 - Added JWT protection for project list details.
+- Added JWT protection for master system role list and add/update.
 - Added response helper for stored procedure `JSON_VALUE` parsing.
 - Disabled active mounting of old event, attendee, payment, file upload, and
   email APIs from `index.js`.
@@ -71,6 +81,7 @@ Backend files:
 - `routes/user.js`
 - `routes/customer.js`
 - `routes/project.js`
+- `routes/master.js`
 - `routes/health.js`
 - `utils/procedureResponse.js`
 - `docs/swagger.js`
@@ -98,6 +109,7 @@ Syntax checks:
 - `node --check routes/user.js`
 - `node --check routes/customer.js`
 - `node --check routes/project.js`
+- `node --check routes/master.js`
 - `node --check routes/health.js`
 - `node --check middlewares/auth.js`
 - `node --check utils/procedureResponse.js`
@@ -108,11 +120,14 @@ Database checks:
 - Connected to `DEV_CITY_SURVEY`
 - Confirmed procedure exists:
   - `USP_POST_USER_AUTHENTICATE_ACTIVITY`
+  - `USP_GET_USER_LIST_ACTIVITY`
   - `USP_POST_USER_PROFILE_ACTIVITY`
   - `USP_GET_LIST_CUSTOMER_ACTIVITY`
   - `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
   - `USP_GET_LIST_PROJECT_ACTIVITY`
   - `USP_POST_PROJECT_ACTIVITY`
+  - `USP_GET_ALL_MASTER_DATA`
+  - `USP_POST_ALL_MASTER_DATA`
 - Auth procedure returned `status: true` for sample user.
 
 HTTP API smoke test:
@@ -120,6 +135,7 @@ HTTP API smoke test:
 - Started local server on configured local port `3103`
 - Health API returns HTTP 200 without JWT
 - Auth API returned HTTP 200 and token
+- User list API returns read-only user data when records exist
 - Protected add/update API accepted token
 - Customer list API returns read-only customer data with nested `PIC_DETAILS`
 - Existing sample email returned `This Email Id Already Exists`
@@ -130,6 +146,10 @@ HTTP API smoke test:
   full project samples are write operations.
 - Project list route can be tested safely with `ITEM=VIEW_ALL`; it is a
   read-only API.
+- System role list route can be tested safely with `ITEM=VIEW_ALL`; it is a
+  read-only API.
+- System role add/update route validation can be tested safely with
+  `{ "ITEM": "ADD" }`; full system role samples are write operations.
 
 ## Current Working API Contracts
 
@@ -183,6 +203,30 @@ Request:
   "PASSWORD": "Abc@1234",
   "CREATED_BY": "1"
 }
+```
+
+### View User List Info
+
+Endpoint:
+
+`GET /api/user/api-get-view-user-list-info`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_USER_LIST_ACTIVITY('VIEW_USER', 'VIEW_ALL', @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=VIEW_ALL
 ```
 
 ### Add or Update Customer Details
@@ -240,6 +284,56 @@ Default query:
 
 ```text
 ITEM=VIEW_ALL
+```
+
+### View Master System Roles
+
+Endpoint:
+
+`GET /api/master/api-get-view-master-system-roles`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_ALL_MASTER_DATA('VIEW_SYSTEM_ROLE', 'VIEW_ALL', NULL, NULL, @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=VIEW_ALL
+```
+
+### Add or Update Master System Role
+
+Endpoint:
+
+`POST /api/master/api-post-add-update-master-system-role`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Request:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "ORGANIZATION_SYS_ID": "1",
+  "SYSTEM_ROLE": "Business Admin",
+  "ROLE_DESC": "Business Admin",
+  "USER_TYPE": "Internal",
+  "CREATED_BY": 1
+}
 ```
 
 ### Add or Update Project
@@ -328,6 +422,7 @@ Walkthrough order:
    - returns 403 for invalid token
 6. Show `routes/user.js`:
    - requires JWT middleware
+   - calls user list procedure for view/list
    - validates `ITEM`
    - wraps payload into array for DB
    - calls user profile procedure
@@ -341,13 +436,19 @@ Walkthrough order:
    - calls project list procedure for view/list
    - validates `ITEM` and required `ADD` fields
    - calls project procedure
-9. Show `routes/health.js`:
+9. Show `routes/master.js`:
+   - requires JWT middleware
+   - calls master list procedure for system roles
+   - validates `ITEM` and required `ADD` fields
+   - calls master add/update procedure for system roles
+10. Show `routes/health.js`:
    - returns API process status without DB or JWT
-10. Show `utils/procedureResponse.js`:
+11. Show `utils/procedureResponse.js`:
    - parses procedure response safely
-11. Show Swagger at `/api/api-docs`.
-12. Run health, auth, user, customer list, project list, safe customer
-    validation, and safe project validation demo.
+12. Show Swagger at `/api/api-docs`.
+13. Run health, auth, user, customer list, project list, system role list, safe
+    customer validation, safe project validation, and safe system-role
+    validation demo.
 
 ## Handoff KT for Database Developer
 
@@ -362,6 +463,8 @@ Confirmed:
   - `ADD_UPDATE_CUSTOMER`
   - `VIEW_PROJECT`
   - `ADD_UPDATE_PROJECT`
+  - `VIEW_SYSTEM_ROLE`
+  - `ADD_UPDATE_SYSTEM_ROLE`
 
 DB follow-up points:
 
@@ -372,6 +475,7 @@ DB follow-up points:
 - Confirm whether future read/list user APIs will be provided.
 - Confirm final update/delete customer payload fields and expected responses.
 - Confirm final update/delete project payload fields and expected responses.
+- Confirm final update/delete system role payload fields and expected responses.
 - Confirm standard response shape for success and failure across procedures.
 
 ## Known Notes and Risks
@@ -390,6 +494,7 @@ DB follow-up points:
 - Confirm update-user and delete-user DB contracts.
 - Confirm update/delete customer DB contracts.
 - Confirm update/delete project DB contracts.
+- Confirm update/delete system role DB contracts.
 - Remove or archive legacy route files after senior developer approval.
 - Keep `.env.example` updated and ensure `.env` stays ignored before pushing to
   remote.

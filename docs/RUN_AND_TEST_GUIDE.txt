@@ -31,6 +31,7 @@ node --check routes\auth.js
 node --check routes\user.js
 node --check routes\customer.js
 node --check routes\project.js
+node --check routes\master.js
 node --check routes\health.js
 node --check middlewares\auth.js
 node --check utils\procedureResponse.js
@@ -69,16 +70,19 @@ const mysql = require('mysql2/promise');
        FROM INFORMATION_SCHEMA.ROUTINES
       WHERE ROUTINE_SCHEMA = ?
         AND ROUTINE_TYPE = 'PROCEDURE'
-        AND ROUTINE_NAME IN (?, ?, ?, ?, ?, ?)
+        AND ROUTINE_NAME IN (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ORDER BY ROUTINE_NAME`,
     [
       process.env.DB_NAME,
       'USP_POST_USER_AUTHENTICATE_ACTIVITY',
+      'USP_GET_USER_LIST_ACTIVITY',
       'USP_POST_USER_PROFILE_ACTIVITY',
       'USP_GET_LIST_CUSTOMER_ACTIVITY',
       'USP_POST_CUSTOMER_DETAILS_ACTIVITY',
       'USP_GET_LIST_PROJECT_ACTIVITY',
       'USP_POST_PROJECT_ACTIVITY',
+      'USP_GET_ALL_MASTER_DATA',
+      'USP_POST_ALL_MASTER_DATA',
     ]
   );
   console.log('Procedures found:', procedures.map((row) => row.ROUTINE_NAME));
@@ -137,11 +141,14 @@ Confirm these tags and endpoints are visible:
 
 - `Health`: `GET /health`
 - `Auth`: `POST /api/auth/api-post-authenticate-user`
+- `User`: `GET /api/user/api-get-view-user-list-info`
 - `User`: `POST /api/user/api-post-add-update-user`
 - `Customer`: `GET /api/customer/api-get-view-list-customer-details`
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
 - `Project`: `GET /api/project/api-get-view-list-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
+- `Master`: `GET /api/master/api-get-view-master-system-roles`
+- `Master`: `POST /api/master/api-post-add-update-master-system-role`
 
 Run the browser demo steps from [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.txt).
 
@@ -195,13 +202,27 @@ Expected:
 
 - A JWT token is printed.
 
-Then test protected user API:
+Then test protected user list API without writing data:
 
 ```powershell
 $headers = @{
   Authorization = "Bearer $($auth.Token)"
 }
 
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/user/api-get-view-user-list-info?ITEM=VIEW_ALL" `
+  -Method Get `
+  -Headers $headers
+```
+
+Expected:
+
+- `status: true`
+- `response` contains user list data when records exist
+
+Then test protected user add/update API:
+
+```powershell
 $userBody = @{
   ITEM = 'ADD_USER'
   USER_SYS_ID = 0
@@ -260,6 +281,20 @@ Expected:
 - `status: true`
 - `response` contains project list data when records exist
 
+Then test protected system-role list API without writing data:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL" `
+  -Method Get `
+  -Headers $headers
+```
+
+Expected:
+
+- `status: true`
+- `response` contains system-role data when records exist
+
 Then test protected customer add/update route validation without writing data:
 
 ```powershell
@@ -306,6 +341,31 @@ Expected safe result:
 status response
 ------ --------
 false  CUSTOMER_SYS_ID is required
+```
+
+Then test protected system-role add/update route validation without writing
+data:
+
+```powershell
+$systemRoleBody = @{
+  ITEM = 'ADD'
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/master/api-post-add-update-master-system-role" `
+  -Method Post `
+  -ContentType 'application/json' `
+  -Headers $headers `
+  -Body $systemRoleBody `
+  -SkipHttpErrorCheck
+```
+
+Expected safe result:
+
+```text
+status response
+------ --------
+false  RECORD_SYS_ID is required
 ```
 
 ## 8. Automated Local Smoke Script
@@ -387,6 +447,14 @@ async function getEmailCount(connection) {
     });
     const authJson = await authResponse.json();
 
+    const userListResponse = await fetch(`${baseUrl}/api/user/api-get-view-user-list-info?ITEM=VIEW_ALL`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+    });
+    const userListJson = await userListResponse.json();
+
     const beforeCount = await getEmailCount(connection);
     const userResponse = await fetch(`${baseUrl}/api/user/api-post-add-update-user`, {
       method: 'POST',
@@ -425,6 +493,14 @@ async function getEmailCount(connection) {
     });
     const projectListJson = await projectListResponse.json();
 
+    const systemRoleListResponse = await fetch(`${baseUrl}/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+    });
+    const systemRoleListJson = await systemRoleListResponse.json();
+
     const projectValidationResponse = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {
       method: 'POST',
       headers: {
@@ -435,12 +511,24 @@ async function getEmailCount(connection) {
     });
     const projectValidationJson = await projectValidationResponse.json();
 
+    const systemRoleValidationResponse = await fetch(`${baseUrl}/api/master/api-post-add-update-master-system-role`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+      body: JSON.stringify({ ITEM: 'ADD' }),
+    });
+    const systemRoleValidationJson = await systemRoleValidationResponse.json();
+
     console.log({
       health_http_status: healthResponse.status,
       health_status: healthJson.status,
       auth_http_status: authResponse.status,
       auth_status: authJson.status,
       token_returned: Boolean(authJson.Token),
+      user_list_http_status: userListResponse.status,
+      user_list_status: userListJson.status,
       add_update_http_status: userResponse.status,
       add_update_response_status: userJson.status,
       add_update_response: userJson.response,
@@ -455,6 +543,10 @@ async function getEmailCount(connection) {
       project_list_status: projectListJson.status,
       project_validation_http_status: projectValidationResponse.status,
       project_validation_response: projectValidationJson.response,
+      system_role_list_http_status: systemRoleListResponse.status,
+      system_role_list_status: systemRoleListJson.status,
+      system_role_validation_http_status: systemRoleValidationResponse.status,
+      system_role_validation_response: systemRoleValidationJson.response,
     });
   } finally {
     await connection.end();
@@ -475,6 +567,8 @@ Expected:
 - `auth_http_status: 200`
 - `auth_status: true`
 - `token_returned: true`
+- `user_list_http_status: 200`
+- `user_list_status: true`
 - `add_update_http_status: 200`
 - `add_update_response: This Email Id Already Exists`
 - `created_extra_sample_user: false`
@@ -486,6 +580,10 @@ Expected:
 - `project_list_status: true`
 - `project_validation_http_status: 400`
 - `project_validation_response: CUSTOMER_SYS_ID is required`
+- `system_role_list_http_status: 200`
+- `system_role_list_status: true`
+- `system_role_validation_http_status: 400`
+- `system_role_validation_response: RECORD_SYS_ID is required`
 
 ## 9. Write Test Warning
 
@@ -503,3 +601,8 @@ To test actual project creation, call
 `POST /api/project/api-post-add-update-project` with the full project sample.
 Only do this when the team agrees to create real project records in the dev
 database.
+
+To test actual system role creation, call
+`POST /api/master/api-post-add-update-master-system-role` with the full system
+role sample. Only do this when the team agrees to create real system role
+records in the dev database.
