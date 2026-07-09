@@ -7,7 +7,10 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./docs/swagger');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
-// City Survey currently uses only auth and user routes.
+const customerRoutes = require('./routes/customer');
+const projectRoutes = require('./routes/project');
+const healthRoutes = require('./routes/health');
+// City Survey currently uses auth, user, customer, project, and health routes.
 // const masterRoutes = require('./routes/master');
 // const eventRoutes = require('./routes/event');
 // const attendeesportalRoutes = require('./routes/attendeesportal');
@@ -35,11 +38,15 @@ app.use((req, res, next) => {
 // app.use('/api/email-service', emailServiceRoutes); 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/customer', customerRoutes);
+app.use('/api/project', projectRoutes);
+app.use('/health', healthRoutes);
 // app.use('/api/master', masterRoutes);
 // app.use('/api/event', eventRoutes);
 // app.use('/api/attendeesportal', attendeesportalRoutes);
 // app.use('/api/file', fileuploaddownloadRoutes);
 // app.use('/api/payment', paymentRoutes); 
+
 app.use('/api/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 const port = process.env.PORT || 3000;
 

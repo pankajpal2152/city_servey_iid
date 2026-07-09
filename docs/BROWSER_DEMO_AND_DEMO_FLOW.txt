@@ -1,14 +1,18 @@
 # Browser Demo and Demo Flow
 
-Date: 2026-07-08
+Date: 2026-07-09
 
 ## Demo Goal
 
 Show that the City Survey Node.js backend is connected to the `DEV_CITY_SURVEY`
-RDS database and that the two active APIs work end to end:
+RDS database and that the active APIs work end to end:
 
 - Authenticate user
 - Add/update user with JWT protection
+- View customer list with JWT protection
+- Add/update customer details with JWT protection
+- Add/update project with JWT protection
+- Health check without JWT
 
 ## Pre-Demo Checklist
 
@@ -66,13 +70,39 @@ Expected:
 
 - Page title: `City Survey Node.js API`
 - Visible tags:
+  - `Health`
   - `Auth`
   - `User`
+  - `Customer`
+  - `Project`
 - Visible APIs:
+  - `GET /health`
   - `POST /api/auth/api-post-authenticate-user`
   - `POST /api/user/api-post-add-update-user`
+  - `GET /api/customer/api-get-view-list-customer-details`
+  - `POST /api/customer/api-post-add-update-customer-details`
+  - `POST /api/project/api-post-add-update-project`
 
-### Step 2: Show Login Validation
+### Step 2: Show Health Check
+
+Open:
+
+`GET /health`
+
+Click:
+
+`Try it out`
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status`, `response`, `uptime`, and `timestamp`
+
+### Step 3: Show Login Validation
 
 Open:
 
@@ -104,7 +134,7 @@ Expected:
 }
 ```
 
-### Step 3: Authenticate Valid User
+### Step 4: Authenticate Valid User
 
 Use body:
 
@@ -127,7 +157,7 @@ Expected:
 
 Copy the `Token` value for the next step.
 
-### Step 4: Authorize Swagger
+### Step 5: Authorize Swagger
 
 Click:
 
@@ -145,7 +175,7 @@ Click:
 
 Close the modal.
 
-### Step 5: Test Protected Add/Update User API Safely
+### Step 6: Test Protected Add/Update User API Safely
 
 Open:
 
@@ -193,19 +223,120 @@ This is a good demo result because it proves:
 - The stored procedure checked real database data
 - No duplicate sample user was created
 
+### Step 7: Test Protected Customer List API
+
+Open:
+
+`GET /api/customer/api-get-view-list-customer-details`
+
+Click:
+
+`Try it out`
+
+Keep `ITEM` as `VIEW_ALL` or leave it empty.
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status: true`
+- Response contains customer rows and nested `PIC_DETAILS` when data exists
+
+### Step 8: Test Protected Customer API Routing Safely
+
+Open:
+
+`POST /api/customer/api-post-add-update-customer-details`
+
+Click:
+
+`Try it out`
+
+Use a validation-only body:
+
+```json
+{
+  "ITEM": "ADD"
+}
+```
+
+Expected safe demo result:
+
+- HTTP 400
+- Response such as:
+
+```json
+{
+  "status": "false",
+  "response": "CUSTOMER_TYPE is required"
+}
+```
+
+This proves Swagger and JWT reach the customer route without creating a
+customer record.
+
+Only execute the full database developer sample if the team approves creating
+real dev DB customer and PIC records.
+
+### Step 9: Test Protected Project API Routing Safely
+
+Open:
+
+`POST /api/project/api-post-add-update-project`
+
+Click:
+
+`Try it out`
+
+Use a validation-only body:
+
+```json
+{
+  "ITEM": "ADD"
+}
+```
+
+Expected safe demo result:
+
+- HTTP 400
+- Response such as:
+
+```json
+{
+  "status": "false",
+  "response": "CUSTOMER_SYS_ID is required"
+}
+```
+
+This proves Swagger and JWT reach the project route without creating a project
+record.
+
+Only execute the full database developer sample if the team approves creating
+real dev DB project records.
+
 ## Full Demo Storyline for Senior Developer
 
-1. "The app starts from `index.js`, where only City Survey auth and user routes
-   are mounted."
+1. "The app starts from `index.js`, where City Survey auth, user, customer,
+   project, and health routes are mounted."
 2. "Database connection comes from `.env` through `config/db.js`; no hardcoded
    DB credentials are needed in source."
 3. "Swagger is limited to the active City Survey APIs, so old event/payment APIs
    are not shown."
-4. "First I will prove request validation with an empty auth payload."
-5. "Now I will login using the sample database user and copy the JWT token."
-6. "Now I will authorize Swagger and call the protected add/update user API."
-7. "The duplicate email response proves API to DB integration without creating a
+4. "First I will prove the API process is running with `GET /health`."
+5. "Then I will prove request validation with an empty auth payload."
+6. "Now I will login using the sample database user and copy the JWT token."
+7. "Now I will authorize Swagger and call the protected add/update user API."
+8. "The duplicate email response proves API to DB integration without creating a
    new user during the demo."
+9. "Then I will show the read-only customer list API."
+10. "For customer add/update, I will show the protected route validation. The
+   full sample is a write operation and should be run only with team approval."
+11. "For project add/update, I will show the protected route validation. The
+   full sample is also a write operation and should be run only with team
+   approval."
 
 ## Browser Console Demo Alternative
 
@@ -217,6 +348,9 @@ Run:
 
 ```javascript
 const baseUrl = 'http://localhost:3103';
+
+const healthResponse = await fetch(`${baseUrl}/health`);
+console.log(healthResponse.status, await healthResponse.json());
 
 const authResponse = await fetch(`${baseUrl}/api/auth/api-post-authenticate-user`, {
   method: 'POST',
@@ -255,10 +389,57 @@ const userResponse = await fetch(`${baseUrl}/api/user/api-post-add-update-user`,
 console.log(userResponse.status, await userResponse.json());
 ```
 
+To view the customer list:
+
+```javascript
+const customerListResponse = await fetch(`${baseUrl}/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+});
+
+console.log(customerListResponse.status, await customerListResponse.json());
+```
+
+To validate the customer route without writing data:
+
+```javascript
+const customerValidationResponse = await fetch(`${baseUrl}/api/customer/api-post-add-update-customer-details`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+  body: JSON.stringify({ ITEM: 'ADD' }),
+});
+
+console.log(customerValidationResponse.status, await customerValidationResponse.json());
+```
+
+To validate the project route without writing data:
+
+```javascript
+const projectValidationResponse = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+  body: JSON.stringify({ ITEM: 'ADD' }),
+});
+
+console.log(projectValidationResponse.status, await projectValidationResponse.json());
+```
+
 ## Demo Do Not Do List
 
 - Do not use a new random email in the add user demo unless the team wants a
   real dev database user to be created.
+- Do not execute the full customer sample unless the team wants real dev
+  customer/PIC records to be created.
+- Do not execute the full project sample unless the team wants real dev project
+  records to be created.
 - Do not paste database passwords into screen-shared notes.
 - Do not re-enable old routes in `index.js` for this demo.
 - Do not use production database credentials for local demo.

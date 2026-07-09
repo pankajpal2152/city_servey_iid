@@ -1,6 +1,6 @@
 # Work Report and Backend Handoff KT
 
-Date: 2026-07-08
+Date: 2026-07-09
 
 ## Work Completed Today
 
@@ -17,8 +17,21 @@ Completed items:
 - Implemented active add/update user API:
   - `POST /api/user/api-post-add-update-user`
   - Procedure: `USP_POST_USER_PROFILE_ACTIVITY`
+- Implemented active add/update customer details API:
+  - `POST /api/customer/api-post-add-update-customer-details`
+  - Procedure: `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
+- Implemented active customer list details API:
+  - `GET /api/customer/api-get-view-list-customer-details`
+  - Procedure: `USP_GET_LIST_CUSTOMER_ACTIVITY`
+- Implemented active add/update project API:
+  - `POST /api/project/api-post-add-update-project`
+  - Procedure: `USP_POST_PROJECT_ACTIVITY`
+- Merged senior developer health API:
+  - `GET /health`
+  - Route: `routes/health.js`
 - Added JWT generation for successful authentication.
-- Added JWT protection for add/update user.
+- Added JWT protection for add/update user and customer details.
+- Added JWT protection for add/update project.
 - Added response helper for stored procedure `JSON_VALUE` parsing.
 - Disabled active mounting of old event, attendee, payment, file upload, and
   email APIs from `index.js`.
@@ -52,6 +65,9 @@ Backend files:
 - `middlewares/auth.js`
 - `routes/auth.js`
 - `routes/user.js`
+- `routes/customer.js`
+- `routes/project.js`
+- `routes/health.js`
 - `utils/procedureResponse.js`
 - `docs/swagger.js`
 - `config/test.js`
@@ -64,6 +80,8 @@ Documentation files:
 - `docs/BROWSER_DEMO_AND_DEMO_FLOW.md`
 - `docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.md`
 - `docs/RUN_AND_TEST_GUIDE.md`
+- `docs/API_URLS.md`
+- `docs/API_ENDPOINTS_DEV_SERVER.md`
 - `docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-08.md`
 - `docs/UI_DEVELOPER_HANDOFF_KT.md`
 
@@ -74,6 +92,9 @@ Syntax checks:
 - `node --check index.js`
 - `node --check routes/auth.js`
 - `node --check routes/user.js`
+- `node --check routes/customer.js`
+- `node --check routes/project.js`
+- `node --check routes/health.js`
 - `node --check middlewares/auth.js`
 - `node --check utils/procedureResponse.js`
 - `node --check docs/swagger.js`
@@ -84,15 +105,24 @@ Database checks:
 - Confirmed procedure exists:
   - `USP_POST_USER_AUTHENTICATE_ACTIVITY`
   - `USP_POST_USER_PROFILE_ACTIVITY`
+  - `USP_GET_LIST_CUSTOMER_ACTIVITY`
+  - `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
+  - `USP_POST_PROJECT_ACTIVITY`
 - Auth procedure returned `status: true` for sample user.
 
 HTTP API smoke test:
 
 - Started local server on configured local port `3103`
+- Health API returns HTTP 200 without JWT
 - Auth API returned HTTP 200 and token
 - Protected add/update API accepted token
+- Customer list API returns read-only customer data with nested `PIC_DETAILS`
 - Existing sample email returned `This Email Id Already Exists`
 - Sample email count stayed `1 -> 1`, so no duplicate test user was created
+- Customer route validation can be tested safely with `{ "ITEM": "ADD" }`;
+  full customer samples are write operations.
+- Project route validation can be tested safely with `{ "ITEM": "ADD" }`;
+  full project samples are write operations.
 
 ## Current Working API Contracts
 
@@ -148,12 +178,113 @@ Request:
 }
 ```
 
+### Add or Update Customer Details
+
+Endpoint:
+
+`POST /api/customer/api-post-add-update-customer-details`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Request:
+
+```json
+{
+  "ITEM": "ADD",
+  "CUSTOMER_TYPE": "Individual",
+  "CUSTOMER_NAME": "Ravi",
+  "BILLING_ADDRESS": "Kolkata",
+  "CREATED_BY": 1,
+  "PIC": [
+    {
+      "FULL_NAME": "Ranjan",
+      "CONTACT_NO": "7875585",
+      "EMAIL_ID": "ranjan@gmail.com",
+      "DEPARTMENT": "Back Office",
+      "DESIGNATION": "Employee"
+    }
+  ]
+}
+```
+
+### View Customer List Details
+
+Endpoint:
+
+`GET /api/customer/api-get-view-list-customer-details`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_LIST_CUSTOMER_ACTIVITY('VIEW_CUSTOMER', 'VIEW_ALL', @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=VIEW_ALL
+```
+
+### Add or Update Project
+
+Endpoint:
+
+`POST /api/project/api-post-add-update-project`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Request:
+
+```json
+{
+  "ITEM": "ADD",
+  "CUSTOMER_SYS_ID": 4,
+  "PIC_SYS_ID": 5,
+  "SITE_ADDRESS": "Mumbai",
+  "ASSIGNED_SURVEYOR": "Marcus Koh",
+  "TYPE_OF_SURVEY": "MRT Pier",
+  "TYPE_OF_PROPERTY": "Own",
+  "CREATED_BY": 1
+}
+```
+
+### Health Check
+
+Endpoint:
+
+`GET /health`
+
+Response:
+
+```json
+{
+  "status": "true",
+  "response": "City Survey API is running",
+  "uptime": 1.23,
+  "timestamp": "2026-07-09T00:00:00.000Z"
+}
+```
+
 ## Handoff KT for Backend Developer
 
 Walkthrough order:
 
 1. Start at `index.js`.
-2. Show only `authRoutes` and `userRoutes` are mounted.
+2. Show only active City Survey routes are mounted.
 3. Show `config/db.js` reads all DB config from `.env`.
 4. Show `routes/auth.js`:
    - normalizes auth payload
@@ -169,10 +300,22 @@ Walkthrough order:
    - validates `ITEM`
    - wraps payload into array for DB
    - calls user profile procedure
-7. Show `utils/procedureResponse.js`:
+7. Show `routes/customer.js`:
+   - requires JWT middleware
+   - calls customer list procedure for view/list
+   - validates `ITEM` and required `ADD` fields
+   - calls customer details procedure
+8. Show `routes/project.js`:
+   - requires JWT middleware
+   - validates `ITEM` and required `ADD` fields
+   - calls project procedure
+9. Show `routes/health.js`:
+   - returns API process status without DB or JWT
+10. Show `utils/procedureResponse.js`:
    - parses procedure response safely
-8. Show Swagger at `/api/api-docs`.
-9. Run auth and add/update demo.
+11. Show Swagger at `/api/api-docs`.
+12. Run health, auth, user, safe customer validation, and safe project
+    validation demo.
 
 ## Handoff KT for Database Developer
 
@@ -183,6 +326,9 @@ Confirmed:
 - Backend uses operation names exactly as provided:
   - `AUTHENTICATE_USER`
   - `ADD_UPDATE_USER`
+  - `VIEW_CUSTOMER`
+  - `ADD_UPDATE_CUSTOMER`
+  - `ADD_UPDATE_PROJECT`
 
 DB follow-up points:
 
@@ -191,6 +337,8 @@ DB follow-up points:
 - Confirm update-user payload fields for `ITEM: UPDATE_USER`.
 - Confirm whether password should be mandatory for update.
 - Confirm whether future read/list user APIs will be provided.
+- Confirm final update/delete customer payload fields and expected responses.
+- Confirm final update/delete project payload fields and expected responses.
 - Confirm standard response shape for success and failure across procedures.
 
 ## Known Notes and Risks
@@ -199,15 +347,16 @@ DB follow-up points:
   testing was moved to local port `3103`.
 - The stored procedure commits internally, so write tests create real dev DB
   records.
-- There is no dedicated health API yet.
 - There are no automated unit/integration test files yet.
 - Legacy route files still exist in the repo, but they are not mounted.
 
 ## Recommended Next Backend Tasks
 
-- Add a non-DB `GET /api/health` endpoint for deployment checks.
+- Add automated monitoring that calls `GET /health` during deployments.
 - Add automated integration test script under a `tests` or `scripts` folder.
 - Confirm update-user and delete-user DB contracts.
+- Confirm update/delete customer DB contracts.
+- Confirm update/delete project DB contracts.
 - Remove or archive legacy route files after senior developer approval.
 - Keep `.env.example` updated and ensure `.env` stays ignored before pushing to
   remote.

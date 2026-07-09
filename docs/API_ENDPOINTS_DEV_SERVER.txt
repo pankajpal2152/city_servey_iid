@@ -1,0 +1,93 @@
+CITY SURVEY DEV SERVER API ENDPOINTS
+Date: 2026-07-09
+
+Swagger URL:
+https://api-dev.citysurveyors.com.sg/api/api-docs/
+
+Base API URL for frontend:
+https://api-dev.citysurveyors.com.sg
+
+Suggested frontend env value:
+VITE_API_BASE_URL=https://api-dev.citysurveyors.com.sg
+
+Common JSON headers:
+Content-Type: application/json
+Accept: application/json
+
+Protected API header:
+Authorization: Bearer <Token>
+
+Get token from:
+POST https://api-dev.citysurveyors.com.sg/api/auth/api-post-authenticate-user
+
+ACTIVE API URL LIST
+
+1. Health Check
+Method: GET
+URL: https://api-dev.citysurveyors.com.sg/health
+Auth Required: No
+
+2. Authenticate User
+Method: POST
+URL: https://api-dev.citysurveyors.com.sg/api/auth/api-post-authenticate-user
+Auth Required: No
+Body:
+[
+  {
+    "USER_NAME": "sai@yopmail.com",
+    "PASSWORD": "Abc@1234"
+  }
+]
+
+3. Add or Update User
+Method: POST
+URL: https://api-dev.citysurveyors.com.sg/api/user/api-post-add-update-user
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
+4. View Customer List
+Method: GET
+URL: https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
+5. Add or Update Customer Details
+Method: POST
+URL: https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
+6. Add or Update Project
+Method: POST
+URL: https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+Body:
+{
+  "ITEM": "ADD",
+  "CUSTOMER_SYS_ID": 4,
+  "PIC_SYS_ID": 5,
+  "SITE_ADDRESS": "Mumbai",
+  "ASSIGNED_SURVEYOR": "Marcus Koh",
+  "TYPE_OF_SURVEY": "MRT Pier",
+  "TYPE_OF_PROPERTY": "Own",
+  "CREATED_BY": 1
+}
+
+RELATIVE PATHS FOR FRONTEND API CLIENT
+
+GET  /health
+POST /api/auth/api-post-authenticate-user
+POST /api/user/api-post-add-update-user
+GET  /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
+POST /api/customer/api-post-add-update-customer-details
+POST /api/project/api-post-add-update-project
+
+NOTES
+
+- Use the dev base URL above in frontend development builds.
+- Do not hardcode DB credentials, JWT secret, or static tokens in frontend code.
+- Login response returns the JWT in the field named Token.
+- Send Authorization: Bearer <Token> only after successful login.
+- The full project payload is a write operation and may create dev DB records.
+- Full request/response examples are available in docs/API_URLS.md.

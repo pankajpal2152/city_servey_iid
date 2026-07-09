@@ -1,6 +1,6 @@
 # Run and Test Guide
 
-Date: 2026-07-08
+Date: 2026-07-09
 
 ## 1. Install Dependencies
 
@@ -29,6 +29,9 @@ Required keys:
 node --check index.js
 node --check routes\auth.js
 node --check routes\user.js
+node --check routes\customer.js
+node --check routes\project.js
+node --check routes\health.js
 node --check middlewares\auth.js
 node --check utils\procedureResponse.js
 node --check docs\swagger.js
@@ -41,8 +44,8 @@ Expected:
 
 ## 4. Test Database Connectivity
 
-This test connects to RDS, confirms the active database, confirms both stored
-procedures exist, and runs the sample authentication procedure.
+This test connects to RDS, confirms the active database, confirms the user and
+customer stored procedures exist, and runs the sample authentication procedure.
 
 ```powershell
 @'
@@ -66,12 +69,15 @@ const mysql = require('mysql2/promise');
        FROM INFORMATION_SCHEMA.ROUTINES
       WHERE ROUTINE_SCHEMA = ?
         AND ROUTINE_TYPE = 'PROCEDURE'
-        AND ROUTINE_NAME IN (?, ?)
+        AND ROUTINE_NAME IN (?, ?, ?, ?, ?)
       ORDER BY ROUTINE_NAME`,
     [
       process.env.DB_NAME,
       'USP_POST_USER_AUTHENTICATE_ACTIVITY',
       'USP_POST_USER_PROFILE_ACTIVITY',
+      'USP_GET_LIST_CUSTOMER_ACTIVITY',
+      'USP_POST_CUSTOMER_DETAILS_ACTIVITY',
+      'USP_POST_PROJECT_ACTIVITY',
     ]
   );
   console.log('Procedures found:', procedures.map((row) => row.ROUTINE_NAME));
@@ -94,7 +100,7 @@ const mysql = require('mysql2/promise');
 Expected:
 
 - `database_name` is `DEV_CITY_SURVEY`
-- Both required procedure names are printed
+- All required procedure names are printed
 - Auth procedure returns `status: true`
 
 ## 5. Start the API Server
@@ -126,7 +132,23 @@ Open:
 If you override `PORT`, open Swagger on that same port. Swagger uses the
 current browser host and port for API calls.
 
+Confirm these tags and endpoints are visible:
+
+- `Health`: `GET /health`
+- `Auth`: `POST /api/auth/api-post-authenticate-user`
+- `User`: `POST /api/user/api-post-add-update-user`
+- `Customer`: `GET /api/customer/api-get-view-list-customer-details`
+- `Customer`: `POST /api/customer/api-post-add-update-customer-details`
+- `Project`: `POST /api/project/api-post-add-update-project`
+
 Run the browser demo steps from [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.md).
+
+Dev server Swagger:
+
+`https://api-dev.citysurveyors.com.sg/api/api-docs/`
+
+UI developers can use [API_ENDPOINTS_DEV_SERVER.md](./API_ENDPOINTS_DEV_SERVER.md)
+or [API_URLS.md](./API_URLS.md) for copy-paste API URLs.
 
 ## 7. PowerShell API Smoke Test
 
@@ -136,6 +158,20 @@ Start the API first in another terminal, then run:
 
 ```powershell
 $baseUrl = 'http://localhost:3103'
+
+Invoke-RestMethod `
+  -Uri "$baseUrl/health" `
+  -Method Get
+```
+
+Expected:
+
+- `status: true`
+- `response: City Survey API is running`
+
+Then test authentication:
+
+```powershell
 
 $authBody = @(
   @{
@@ -194,6 +230,68 @@ status response
 false  This Email Id Already Exists
 ```
 
+Then test protected customer list API without writing data:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL" `
+  -Method Get `
+  -Headers $headers
+```
+
+Expected:
+
+- `status: true`
+- `response` contains customer list data when records exist
+
+Then test protected customer add/update route validation without writing data:
+
+```powershell
+$customerBody = @{
+  ITEM = 'ADD'
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/customer/api-post-add-update-customer-details" `
+  -Method Post `
+  -ContentType 'application/json' `
+  -Headers $headers `
+  -Body $customerBody `
+  -SkipHttpErrorCheck
+```
+
+Expected safe result:
+
+```text
+status response
+------ --------
+false  CUSTOMER_TYPE is required
+```
+
+Then test protected project add/update route validation without writing data:
+
+```powershell
+$projectBody = @{
+  ITEM = 'ADD'
+} | ConvertTo-Json
+
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/project/api-post-add-update-project" `
+  -Method Post `
+  -ContentType 'application/json' `
+  -Headers $headers `
+  -Body $projectBody `
+  -SkipHttpErrorCheck
+```
+
+Expected safe result:
+
+```text
+status response
+------ --------
+false  CUSTOMER_SYS_ID is required
+```
+
 ## 8. Automated Local Smoke Script
 
 This script starts the app on a temporary port, logs in, calls the protected
@@ -229,12 +327,8 @@ async function sleep(ms) {
 async function waitForServer() {
   for (let attempt = 0; attempt < 40; attempt += 1) {
     try {
-      const response = await fetch(`${baseUrl}/api/auth/api-post-authenticate-user`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}',
-      });
-      if (response.status === 400) return;
+      const response = await fetch(`${baseUrl}/health`);
+      if (response.status === 200) return;
     } catch (error) {
       await sleep(500);
     }
@@ -267,6 +361,9 @@ async function getEmailCount(connection) {
   try {
     await waitForServer();
 
+    const healthResponse = await fetch(`${baseUrl}/health`);
+    const healthJson = await healthResponse.json();
+
     const authResponse = await fetch(`${baseUrl}/api/auth/api-post-authenticate-user`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -286,7 +383,37 @@ async function getEmailCount(connection) {
     const userJson = await userResponse.json();
     const afterCount = await getEmailCount(connection);
 
+    const customerValidationResponse = await fetch(`${baseUrl}/api/customer/api-post-add-update-customer-details`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+      body: JSON.stringify({ ITEM: 'ADD' }),
+    });
+    const customerValidationJson = await customerValidationResponse.json();
+
+    const customerListResponse = await fetch(`${baseUrl}/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+    });
+    const customerListJson = await customerListResponse.json();
+
+    const projectValidationResponse = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+      body: JSON.stringify({ ITEM: 'ADD' }),
+    });
+    const projectValidationJson = await projectValidationResponse.json();
+
     console.log({
+      health_http_status: healthResponse.status,
+      health_status: healthJson.status,
       auth_http_status: authResponse.status,
       auth_status: authJson.status,
       token_returned: Boolean(authJson.Token),
@@ -296,6 +423,12 @@ async function getEmailCount(connection) {
       sample_email_count_before: beforeCount,
       sample_email_count_after: afterCount,
       created_extra_sample_user: afterCount > beforeCount,
+      customer_validation_http_status: customerValidationResponse.status,
+      customer_validation_response: customerValidationJson.response,
+      customer_list_http_status: customerListResponse.status,
+      customer_list_status: customerListJson.status,
+      project_validation_http_status: projectValidationResponse.status,
+      project_validation_response: projectValidationJson.response,
     });
   } finally {
     await connection.end();
@@ -311,12 +444,20 @@ async function getEmailCount(connection) {
 
 Expected:
 
+- `health_http_status: 200`
+- `health_status: true`
 - `auth_http_status: 200`
 - `auth_status: true`
 - `token_returned: true`
 - `add_update_http_status: 200`
 - `add_update_response: This Email Id Already Exists`
 - `created_extra_sample_user: false`
+- `customer_validation_http_status: 400`
+- `customer_validation_response: CUSTOMER_TYPE is required`
+- `customer_list_http_status: 200`
+- `customer_list_status: true`
+- `project_validation_http_status: 400`
+- `project_validation_response: CUSTOMER_SYS_ID is required`
 
 ## 9. Write Test Warning
 
@@ -324,3 +465,13 @@ To test actual user creation, change `EMAIL_ID` and `MOBILE_NO` to unique values
 
 Only do this when the team agrees to create a real record in the dev database,
 because the stored procedure commits internally.
+
+To test actual customer creation, call
+`POST /api/customer/api-post-add-update-customer-details` with the full customer
+and `PIC` sample. Only do this when the team agrees to create real customer and
+PIC records in the dev database.
+
+To test actual project creation, call
+`POST /api/project/api-post-add-update-project` with the full project sample.
+Only do this when the team agrees to create real project records in the dev
+database.

@@ -1,13 +1,17 @@
 # Module Architecture and Scenario Flow
 
-Date: 2026-07-08
+Date: 2026-07-09
 
 ## Current Backend Scope
 
-The City Survey backend currently exposes two active business APIs:
+The City Survey backend currently exposes the following active APIs:
 
 - Authenticate a user through `USP_POST_USER_AUTHENTICATE_ACTIVITY`
 - Add or update a user through `USP_POST_USER_PROFILE_ACTIVITY`
+- Add or update customer details through `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
+- View list customer details through `USP_GET_LIST_CUSTOMER_ACTIVITY`
+- Add or update project through `USP_POST_PROJECT_ACTIVITY`
+- Check API process health through `GET /health`
 
 All other legacy event, attendee, payment, file upload, and email modules are
 not mounted in `index.js` for this City Survey phase.
@@ -20,6 +24,9 @@ not mounted in `index.js` for this City Survey phase.
 | Database pool | `config/db.js` | Creates MySQL pool from `.env` values | Active |
 | Auth route | `routes/auth.js` | Handles user authentication, calls auth stored procedure, signs JWT | Active |
 | User route | `routes/user.js` | Handles add/update user, calls profile stored procedure | Active |
+| Customer route | `routes/customer.js` | Handles customer list view plus add/update customer details and PIC records | Active |
+| Project route | `routes/project.js` | Handles add/update project, calls project stored procedure | Active |
+| Health route | `routes/health.js` | Returns a lightweight API status response without JWT or DB calls | Active |
 | JWT middleware | `middlewares/auth.js` | Validates `Authorization: Bearer <token>` before protected APIs | Active |
 | Procedure helper | `utils/procedureResponse.js` | Normalizes stored procedure `JSON_VALUE` responses | Active |
 | Swagger config | `docs/swagger.js` | Builds Swagger docs only for active City Survey routes | Active |
@@ -45,27 +52,66 @@ flowchart LR
   Express["Express App - index.js"]
   AuthRoute["Auth Route - routes/auth.js"]
   UserRoute["User Route - routes/user.js"]
+  CustomerRoute["Customer Route - routes/customer.js"]
+  ProjectRoute["Project Route - routes/project.js"]
+  HealthRoute["Health Route - routes/health.js"]
   Jwt["JWT Middleware - middlewares/auth.js"]
   Helper["Procedure Response Helper"]
   Pool["MySQL Pool - config/db.js"]
   DB["RDS MySQL - DEV_CITY_SURVEY"]
   AuthSP["USP_POST_USER_AUTHENTICATE_ACTIVITY"]
   UserSP["USP_POST_USER_PROFILE_ACTIVITY"]
+  CustomerSP["USP_POST_CUSTOMER_DETAILS_ACTIVITY"]
+  CustomerListSP["USP_GET_LIST_CUSTOMER_ACTIVITY"]
+  ProjectSP["USP_POST_PROJECT_ACTIVITY"]
 
   UI --> Express
   Express --> AuthRoute
   Express --> UserRoute
+  Express --> CustomerRoute
+  Express --> ProjectRoute
+  Express --> HealthRoute
   UserRoute --> Jwt
+  CustomerRoute --> Jwt
+  ProjectRoute --> Jwt
   AuthRoute --> Pool
   UserRoute --> Pool
+  CustomerRoute --> Pool
+  ProjectRoute --> Pool
   Pool --> DB
   DB --> AuthSP
   DB --> UserSP
+  DB --> CustomerSP
+  DB --> CustomerListSP
+  DB --> ProjectSP
   AuthSP --> Helper
   UserSP --> Helper
+  CustomerSP --> Helper
+  CustomerListSP --> Helper
+  ProjectSP --> Helper
   Helper --> AuthRoute
   Helper --> UserRoute
+  Helper --> CustomerRoute
+  Helper --> ProjectRoute
 ```
+
+## Request Flow: Health Check
+
+Endpoint:
+
+`GET /health`
+
+```mermaid
+sequenceDiagram
+  participant Client as Browser, Load Balancer, or DevOps Probe
+  participant API as Express Health API
+
+  Client->>API: GET /health
+  API-->>Client: status, response, uptime, timestamp
+```
+
+The health endpoint does not require JWT and does not call the database. It is
+intended for deployment checks, local smoke tests, and process monitoring.
 
 ## Request Flow: Authenticate User
 
@@ -172,6 +218,152 @@ sends the stored procedure a one-item array:
 
 This keeps the UI simple while matching the database implementation.
 
+## Request Flow: Add or Update Customer Details
+
+Endpoint:
+
+`POST /api/customer/api-post-add-update-customer-details`
+
+Stored procedure:
+
+`USP_POST_CUSTOMER_DETAILS_ACTIVITY('ADD_UPDATE_CUSTOMER', P_JSON, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Customer API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Customer Details Stored Procedure
+
+  UI->>API: POST customer payload with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Validate ITEM and required ADD fields
+  API->>DB: CALL USP_POST_CUSTOMER_DETAILS_ACTIVITY
+  DB->>SP: Add/update customer and PIC logic
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Procedure response JSON
+```
+
+### Customer Payload Shape
+
+The API accepts the object shape provided by the database developer:
+
+```json
+{
+  "ITEM": "ADD",
+  "CUSTOMER_TYPE": "Individual",
+  "CUSTOMER_NAME": "Ravi",
+  "BILLING_ADDRESS": "Kolkata",
+  "CREATED_BY": 1,
+  "PIC": [
+    {
+      "FULL_NAME": "Ranjan",
+      "CONTACT_NO": "7875585",
+      "EMAIL_ID": "ranjan@gmail.com",
+      "DEPARTMENT": "Back Office",
+      "DESIGNATION": "Employee"
+    }
+  ]
+}
+```
+
+If a client accidentally sends a one-item array, the backend unwraps the first
+object before calling the stored procedure. This keeps `PIC` available at the
+root object path expected by the live procedure.
+
+## Request Flow: View Customer List Details
+
+Endpoint:
+
+`GET /api/customer/api-get-view-list-customer-details`
+
+Stored procedure:
+
+`USP_GET_LIST_CUSTOMER_ACTIVITY('VIEW_CUSTOMER', P_ITEM, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Customer API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Customer List Stored Procedure
+
+  UI->>API: GET customer list with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Use ITEM query value or default VIEW_ALL
+  API->>DB: CALL USP_GET_LIST_CUSTOMER_ACTIVITY
+  DB->>SP: Fetch customer list and PIC details
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Customer list JSON
+```
+
+Default query behavior:
+
+```text
+GET /api/customer/api-get-view-list-customer-details
+```
+
+is treated as:
+
+```text
+GET /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
+```
+
+## Request Flow: Add or Update Project
+
+Endpoint:
+
+`POST /api/project/api-post-add-update-project`
+
+Stored procedure:
+
+`USP_POST_PROJECT_ACTIVITY('ADD_UPDATE_PROJECT', P_JSON, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Project API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Project Stored Procedure
+
+  UI->>API: POST project payload with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Validate ITEM and required ADD fields
+  API->>DB: CALL USP_POST_PROJECT_ACTIVITY
+  DB->>SP: Add/update project logic
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Procedure response JSON
+```
+
+### Project Payload Shape
+
+The API accepts the object shape provided by the database developer:
+
+```json
+{
+  "ITEM": "ADD",
+  "CUSTOMER_SYS_ID": 4,
+  "PIC_SYS_ID": 5,
+  "SITE_ADDRESS": "Mumbai",
+  "ASSIGNED_SURVEYOR": "Marcus Koh",
+  "TYPE_OF_SURVEY": "MRT Pier",
+  "TYPE_OF_PROPERTY": "Own",
+  "CREATED_BY": 1
+}
+```
+
+If a client accidentally sends a one-item array, the backend unwraps the first
+object before calling the stored procedure.
+
 ## Scenario Matrix
 
 | Scenario | API | Input | Expected Result |
@@ -184,6 +376,12 @@ This keeps the UI simple while matching the database implementation.
 | Missing bearer token | `POST /api/user/api-post-add-update-user` | No `Authorization` header | HTTP 401 |
 | Invalid bearer token | `POST /api/user/api-post-add-update-user` | Bad token | HTTP 403 |
 | Missing `ITEM` | `POST /api/user/api-post-add-update-user` | `{}` with token | HTTP 400, `ITEM is required` |
+| View customer list | `GET /api/customer/api-get-view-list-customer-details` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, customer list with nested `PIC_DETAILS` |
+| Add customer details | `POST /api/customer/api-post-add-update-customer-details` | Valid customer payload, valid token | HTTP 200, DB response, customer/PIC records may be created |
+| Missing customer fields | `POST /api/customer/api-post-add-update-customer-details` | Missing required ADD field, valid token | HTTP 400 with validation response |
+| Add project | `POST /api/project/api-post-add-update-project` | Valid project payload, valid token | HTTP 200, DB response, project records may be created |
+| Missing project fields | `POST /api/project/api-post-add-update-project` | Missing required ADD field, valid token | HTTP 400 with validation response |
+| Health check | `GET /health` | No body | HTTP 200, API status JSON |
 | DB unavailable | Any DB-backed API | RDS/network issue | HTTP 500 with error message |
 
 ## Module Ownership Boundaries
@@ -195,6 +393,7 @@ Backend owns:
 - Request payload normalization
 - Stored procedure invocation
 - Procedure response normalization
+- Customer payload validation before DB call
 
 Database owns:
 
@@ -202,6 +401,7 @@ Database owns:
 - User existence validation
 - User insert/update rules
 - Role and organization references
+- Project insert/update rules
 - Stored procedure response messages
 
 Frontend owns:
@@ -209,6 +409,8 @@ Frontend owns:
 - Login form
 - Token storage and protected route handling
 - Add/update user form validation
+- Add/update customer form validation
+- Add/update project form validation
 - Displaying backend and DB response messages
 
 ## Inactive Legacy Code

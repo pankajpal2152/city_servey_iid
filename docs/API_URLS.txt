@@ -1,0 +1,259 @@
+# City Survey Dev Server API URLs
+
+Date: 2026-07-09
+
+This file is the UI developer handoff reference for the active City Survey
+backend APIs shown in Swagger.
+
+## Dev Server
+
+Base API URL:
+
+```text
+https://api-dev.citysurveyors.com.sg
+```
+
+Swagger URL:
+
+```text
+https://api-dev.citysurveyors.com.sg/api/api-docs/
+```
+
+Local backend URL, only when running the Node.js API on this machine:
+
+```text
+http://localhost:3103
+```
+
+## Frontend Environment Value
+
+Use this value in the frontend environment file:
+
+```env
+VITE_API_BASE_URL=https://api-dev.citysurveyors.com.sg
+```
+
+If the frontend is not using Vite, keep the same URL and use the framework's
+required variable name, for example `REACT_APP_API_BASE_URL`,
+`NEXT_PUBLIC_API_BASE_URL`, or the existing project convention.
+
+## Common Headers
+
+For all JSON requests:
+
+```http
+Content-Type: application/json
+Accept: application/json
+```
+
+Protected APIs also require the login token:
+
+```http
+Authorization: Bearer <Token>
+```
+
+The token comes from `POST /api/auth/api-post-authenticate-user` in the
+response field named `Token`.
+
+## Full Dev Server API URLs
+
+| Module   | Method | Dev Server URL                                                                                         | Auth Required |
+| -------- | ------ | ------------------------------------------------------------------------------------------------------ | ------------- |
+| Health   | GET    | `https://api-dev.citysurveyors.com.sg/health`                                                        | No            |
+| Auth     | POST   | `https://api-dev.citysurveyors.com.sg/api/auth/api-post-authenticate-user`                           | No            |
+| User     | POST   | `https://api-dev.citysurveyors.com.sg/api/user/api-post-add-update-user`                             | Yes           |
+| Customer | GET    | `https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL` | Yes           |
+| Customer | POST   | `https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details`             | Yes           |
+| Project  | POST   | `https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project`                       | Yes           |
+
+## Relative API Paths
+
+Use these paths when the frontend already has `VITE_API_BASE_URL` or another
+base URL configured:
+
+```text
+GET  /health
+POST /api/auth/api-post-authenticate-user
+POST /api/user/api-post-add-update-user
+GET  /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
+POST /api/customer/api-post-add-update-customer-details
+POST /api/project/api-post-add-update-project
+```
+
+## 1. Health Check
+
+```text
+GET https://api-dev.citysurveyors.com.sg/health
+```
+
+Auth required: No
+
+Success response shape:
+
+```json
+{
+  "status": "true",
+  "response": "City Survey API is running",
+  "uptime": 123.45,
+  "timestamp": "2026-07-09T00:00:00.000Z"
+}
+```
+
+## 2. Authenticate User
+
+```text
+POST https://api-dev.citysurveyors.com.sg/api/auth/api-post-authenticate-user
+```
+
+Auth required: No
+
+Request body:
+
+```json
+[
+  {
+    "USER_NAME": "sai@yopmail.com",
+    "PASSWORD": "Abc@1234"
+  }
+]
+```
+
+Frontend usage:
+
+- On success, read `Token` from the response.
+- Store the token according to the frontend project's auth pattern.
+- Send `Authorization: Bearer <Token>` for protected APIs.
+
+## 3. Add or Update User
+
+```text
+POST https://api-dev.citysurveyors.com.sg/api/user/api-post-add-update-user
+```
+
+Auth required: Yes
+
+Request body:
+
+```json
+{
+  "ITEM": "ADD_USER",
+  "USER_SYS_ID": 0,
+  "SYSTEM_ROLE_SYS_ID": 1,
+  "FIRST_NAME": "Sai",
+  "LAST_NAME": "Roy",
+  "GENDER": "Male",
+  "MOBILE_NO": "7894561230",
+  "EMAIL_ID": "sai@yopmail.com",
+  "ORGANISATION_SYS_ID": "1",
+  "PASSWORD": "Abc@1234",
+  "CREATED_BY": "1"
+}
+```
+
+## 4. View Customer List
+
+```text
+GET https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
+```
+
+Auth required: Yes
+
+Query parameter:
+
+| Name     | Required | Default      | Example      |
+| -------- | -------- | ------------ | ------------ |
+| `ITEM` | No       | `VIEW_ALL` | `VIEW_ALL` |
+
+Frontend usage:
+
+```js
+const url = `${API_BASE_URL}/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL`;
+```
+
+## 5. Add or Update Customer Details
+
+```text
+POST https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details
+```
+
+Auth required: Yes
+
+Request body:
+
+```json
+{
+  "ITEM": "ADD",
+  "CUSTOMER_TYPE": "Individual",
+  "CUSTOMER_NAME": "Ravi",
+  "BILLING_ADDRESS": "Kolkata",
+  "CREATED_BY": 1,
+  "PIC": [
+    {
+      "FULL_NAME": "Ranjan",
+      "CONTACT_NO": "7875585",
+      "EMAIL_ID": "ranjan@gmail.com",
+      "DEPARTMENT": "Back Office",
+      "DESIGNATION": "Employee"
+    },
+    {
+      "FULL_NAME": "Manoj",
+      "CONTACT_NO": "7852479",
+      "EMAIL_ID": "manoj@gmail.com",
+      "DEPARTMENT": "Back Office",
+      "DESIGNATION": "Employee"
+    }
+  ]
+}
+```
+
+Running this sample with a valid token may create records in the dev database.
+
+## 6. Add or Update Project
+
+```text
+POST https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
+```
+
+Auth required: Yes
+
+Request body:
+
+```json
+{
+  "ITEM": "ADD",
+  "CUSTOMER_SYS_ID": 4,
+  "PIC_SYS_ID": 5,
+  "SITE_ADDRESS": "Mumbai",
+  "ASSIGNED_SURVEYOR": "Marcus Koh",
+  "TYPE_OF_SURVEY": "MRT Pier",
+  "TYPE_OF_PROPERTY": "Own",
+  "CREATED_BY": 1
+}
+```
+
+Running this sample with a valid token may create records in the dev database.
+
+## Swagger Visibility Checklist
+
+The dev Swagger URL should show these tags:
+
+- `Health`
+- `Auth`
+- `User`
+- `Customer`
+- `Project`
+
+The dev Swagger URL should show these API paths:
+
+- `GET /health`
+- `POST /api/auth/api-post-authenticate-user`
+- `POST /api/user/api-post-add-update-user`
+- `GET /api/customer/api-get-view-list-customer-details`
+- `POST /api/customer/api-post-add-update-customer-details`
+- `POST /api/project/api-post-add-update-project`
+
+This list was checked against:
+
+```text
+https://api-dev.citysurveyors.com.sg/api/api-docs/swagger-ui-init.js
+```

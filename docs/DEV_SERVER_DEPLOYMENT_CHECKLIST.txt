@@ -1,6 +1,6 @@
 # Dev Server Deployment Checklist
 
-Date: 2026-07-08
+Date: 2026-07-09
 
 ## Purpose
 
@@ -16,6 +16,9 @@ connected correctly.
   - `config/db.js`
   - `routes/auth.js`
   - `routes/user.js`
+  - `routes/customer.js`
+  - `routes/project.js`
+  - `routes/health.js`
   - `middlewares/auth.js`
   - `utils/procedureResponse.js`
   - `docs/swagger.js`
@@ -113,6 +116,9 @@ Run syntax checks:
 node --check index.js
 node --check routes\auth.js
 node --check routes\user.js
+node --check routes\customer.js
+node --check routes\project.js
+node --check routes\health.js
 node --check middlewares\auth.js
 node --check utils\procedureResponse.js
 node --check docs\swagger.js
@@ -137,6 +143,9 @@ Verify:
 - Database name is `DEV_CITY_SURVEY`
 - Procedure `USP_POST_USER_AUTHENTICATE_ACTIVITY` exists
 - Procedure `USP_POST_USER_PROFILE_ACTIVITY` exists
+- Procedure `USP_GET_LIST_CUSTOMER_ACTIVITY` exists
+- Procedure `USP_POST_CUSTOMER_DETAILS_ACTIVITY` exists
+- Procedure `USP_POST_PROJECT_ACTIVITY` exists
 - Sample auth call returns `status: true`
 
 Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.md).
@@ -145,11 +154,17 @@ Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.md).
 
 Verify with Swagger:
 
+- Health API returns status at `/health`
 - Swagger opens at `/api/api-docs`
+- Swagger shows all five tags: `Health`, `Auth`, `User`, `Customer`, and
+  `Project`
 - Swagger "Try it out" calls the same host and port where Swagger is opened
   because the OpenAPI server URL is relative `/`.
 - Auth API returns token for sample user
 - Protected user API accepts the token
+- Protected customer list API returns `VIEW_ALL` response
+- Protected customer API validates payload when token is provided
+- Protected project API validates payload when token is provided
 - Duplicate sample email returns `This Email Id Already Exists`
 
 ## 9. Dev Server Process Checklist
@@ -190,6 +205,8 @@ Then run:
 2. Valid auth body should return HTTP 200 and token.
 3. Add/update duplicate sample user should return HTTP 200 and duplicate email
    response.
+4. Project validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+   `CUSTOMER_SYS_ID is required`.
 
 ## 11. Rollback Checklist
 
@@ -207,4 +224,5 @@ If deployment fails:
 - During local testing on 2026-07-08, port `3000` was already occupied by a
   separate `node` process. The local City Survey `.env` now uses port `3103`.
 - The add/update stored procedure commits internally, so avoid write tests with
-  new email addresses unless the team approves creating a dev DB record.
+  new email addresses, full customer payloads, or full project payloads unless
+  the team approves creating dev DB records.

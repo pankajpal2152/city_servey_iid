@@ -1,0 +1,617 @@
+# UI Developer Handoff KT
+
+Date: 2026-07-09
+
+## Purpose
+
+This document explains how the UI should integrate with the current City Survey
+backend APIs.
+
+## Base URL
+
+Dev server:
+
+```text
+https://api-dev.citysurveyors.com.sg
+```
+
+Swagger:
+
+```text
+https://api-dev.citysurveyors.com.sg/api/api-docs/
+```
+
+Quick endpoint sheet:
+
+```text
+docs/API_ENDPOINTS_DEV_SERVER.md
+```
+
+Local default:
+
+```text
+http://localhost:3103
+```
+
+Temporary local example:
+
+```text
+http://localhost:3104
+```
+
+## Active API List
+
+| Feature | Method | Endpoint | Auth Required |
+| --- | --- | --- | --- |
+| Health check | GET | `/health` | No |
+| User login | POST | `/api/auth/api-post-authenticate-user` | No |
+| Add/update user | POST | `/api/user/api-post-add-update-user` | Yes |
+| View customer list | GET | `/api/customer/api-get-view-list-customer-details` | Yes |
+| Add/update customer details | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
+| Add/update project | POST | `/api/project/api-post-add-update-project` | Yes |
+
+## Health Check Integration
+
+Use this only for app/server availability checks, not for user authentication.
+
+```http
+GET /health
+```
+
+Expected response:
+
+```json
+{
+  "status": "true",
+  "response": "City Survey API is running",
+  "uptime": 1.23,
+  "timestamp": "2026-07-09T00:00:00.000Z"
+}
+```
+
+## Login Integration
+
+### Request
+
+```http
+POST /api/auth/api-post-authenticate-user
+Content-Type: application/json
+```
+
+Preferred body:
+
+```json
+[
+  {
+    "USER_NAME": "sai@yopmail.com",
+    "PASSWORD": "Abc@1234"
+  }
+]
+```
+
+Object body also works:
+
+```json
+{
+  "USER_NAME": "sai@yopmail.com",
+  "PASSWORD": "Abc@1234"
+}
+```
+
+### Successful Response
+
+The response contains:
+
+- `Token`
+- `status`
+- `response`
+- user fields from DB such as `USER_SYS_ID`, `FIRST_NAME`, `EMAIL_ID`,
+  `SYSTEM_ROLE_NAME`, `ORGANISATION_SYS_ID`
+
+Example shape:
+
+```json
+{
+  "Token": "<jwt-token>",
+  "status": "true",
+  "response": "User login is successful.",
+  "USER_SYS_ID": 3,
+  "FIRST_NAME": "Sai",
+  "EMAIL_ID": "sai@yopmail.com",
+  "SYSTEM_ROLE_NAME": "Admin",
+  "ORGANISATION_SYS_ID": 1
+}
+```
+
+### Frontend Login Handling
+
+On success:
+
+- Store `Token` in the frontend auth state.
+- Use the token for protected APIs.
+- Redirect to dashboard or user management page.
+
+On failure:
+
+- If HTTP 400, show missing field validation.
+- If HTTP 401, show invalid credentials.
+- If HTTP 500, show server or database error message.
+
+## Token Usage
+
+Protected APIs require:
+
+```http
+Authorization: Bearer <Token>
+```
+
+Token expiry:
+
+- Backend signs login tokens for `7d`.
+
+Recommended UI behavior:
+
+- If API returns 401, redirect user to login.
+- If API returns 403, clear token and redirect user to login.
+- Do not send protected API requests without token.
+
+## Add/Update User Integration
+
+### Request
+
+```http
+POST /api/user/api-post-add-update-user
+Content-Type: application/json
+Authorization: Bearer <Token>
+```
+
+Body:
+
+```json
+{
+  "ITEM": "ADD_USER",
+  "USER_SYS_ID": 0,
+  "SYSTEM_ROLE_SYS_ID": 1,
+  "FIRST_NAME": "Sai",
+  "LAST_NAME": "Roy",
+  "GENDER": "Male",
+  "MOBILE_NO": "7894561230",
+  "EMAIL_ID": "sai@yopmail.com",
+  "ORGANISATION_SYS_ID": "1",
+  "PASSWORD": "Abc@1234",
+  "CREATED_BY": "1"
+}
+```
+
+### Field Mapping
+
+| UI Field | Payload Key | Required for Add | Suggested UI Validation |
+| --- | --- | --- | --- |
+| Action | `ITEM` | Yes | Use `ADD_USER` for create. Confirm update value with backend/DB team. |
+| User ID | `USER_SYS_ID` | Yes | `0` for add. Existing user id for update. |
+| Role | `SYSTEM_ROLE_SYS_ID` | Yes | Dropdown once role list API is available. |
+| First name | `FIRST_NAME` | Yes | Required, trim whitespace. |
+| Last name | `LAST_NAME` | Yes | Required, trim whitespace. |
+| Gender | `GENDER` | Optional until DB confirms | Dropdown or radio. |
+| Mobile number | `MOBILE_NO` | Yes | Digits only, length validation as per product rule. |
+| Email | `EMAIL_ID` | Yes | Email format validation. |
+| Organization | `ORGANISATION_SYS_ID` | Yes | Dropdown once organization list API is available. |
+| Password | `PASSWORD` | Yes for add | Enforce product password policy when confirmed. |
+| Created by | `CREATED_BY` | Yes | Use logged-in user's `USER_SYS_ID` when available. |
+
+### Response Handling
+
+Success or business validation responses come from the stored procedure.
+
+Example duplicate email response:
+
+```json
+{
+  "status": "false",
+  "response": "This Email Id Already Exists"
+}
+```
+
+UI should display the `response` message to the user.
+
+## View Customer List Integration
+
+### Request
+
+```http
+GET /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
+Authorization: Bearer <Token>
+```
+
+`ITEM` is optional. If it is omitted, the backend sends `VIEW_ALL` to the stored
+procedure.
+
+### Expected Response Shape
+
+```json
+{
+  "status": "true",
+  "response": [
+    {
+      "CUSTOMER_SYS_ID": 1,
+      "CUSTOMER_TYPE": "Individual",
+      "CUSTOMER_NAME": "Ravi",
+      "DATE_CREATED": "2026-07-03",
+      "PIC_DETAILS": [
+        {
+          "PIC_SYS_ID": 1,
+          "FULL_NAME": "Ranjan",
+          "CONTACT_NO": "7875585"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Use this API to populate customer tables, dropdowns, and customer management
+screens.
+
+## Add/Update Customer Details Integration
+
+### Request
+
+```http
+POST /api/customer/api-post-add-update-customer-details
+Content-Type: application/json
+Authorization: Bearer <Token>
+```
+
+Body:
+
+```json
+{
+  "ITEM": "ADD",
+  "CUSTOMER_TYPE": "Individual",
+  "CUSTOMER_NAME": "Ravi",
+  "BILLING_ADDRESS": "Kolkata",
+  "CREATED_BY": 1,
+  "PIC": [
+    {
+      "FULL_NAME": "Ranjan",
+      "CONTACT_NO": "7875585",
+      "EMAIL_ID": "ranjan@gmail.com",
+      "DEPARTMENT": "Back Office",
+      "DESIGNATION": "Employee"
+    },
+    {
+      "FULL_NAME": "Manoj",
+      "CONTACT_NO": "7852479",
+      "EMAIL_ID": "manoj@gmail.com",
+      "DEPARTMENT": "Back Office",
+      "DESIGNATION": "Employee"
+    }
+  ]
+}
+```
+
+### Customer Field Mapping
+
+| UI Field | Payload Key | Required for Add | Suggested UI Validation |
+| --- | --- | --- | --- |
+| Action | `ITEM` | Yes | Use `ADD` for create. Confirm update value with backend/DB team. |
+| Customer type | `CUSTOMER_TYPE` | Yes | Dropdown or radio, for example `Individual`. |
+| Customer name | `CUSTOMER_NAME` | Yes | Required, trim whitespace. |
+| Billing address | `BILLING_ADDRESS` | Yes | Required, allow multiline if UI needs. |
+| Created by | `CREATED_BY` | Yes | Use logged-in user's `USER_SYS_ID` when available. |
+| PIC list | `PIC` | Optional until DB confirms | Array of customer contact persons. |
+| PIC full name | `PIC[].FULL_NAME` | For each PIC row | Required when adding a PIC row. |
+| PIC contact no | `PIC[].CONTACT_NO` | For each PIC row | Digits/phone validation as per product rule. |
+| PIC email | `PIC[].EMAIL_ID` | For each PIC row | Email format validation. |
+| PIC department | `PIC[].DEPARTMENT` | For each PIC row | Text/dropdown as per product rule. |
+| PIC designation | `PIC[].DESIGNATION` | For each PIC row | Text/dropdown as per product rule. |
+
+The backend expects a root object. If a one-item array is sent accidentally, the
+backend unwraps it before calling the stored procedure so `PIC` remains at the
+root object path expected by the database.
+
+## Add/Update Project Integration
+
+### Request
+
+```http
+POST /api/project/api-post-add-update-project
+Content-Type: application/json
+Authorization: Bearer <Token>
+```
+
+Body:
+
+```json
+{
+  "ITEM": "ADD",
+  "CUSTOMER_SYS_ID": 4,
+  "PIC_SYS_ID": 5,
+  "SITE_ADDRESS": "Mumbai",
+  "ASSIGNED_SURVEYOR": "Marcus Koh",
+  "TYPE_OF_SURVEY": "MRT Pier",
+  "TYPE_OF_PROPERTY": "Own",
+  "CREATED_BY": 1
+}
+```
+
+### Project Field Mapping
+
+| UI Field | Payload Key | Required for Add | Suggested UI Validation |
+| --- | --- | --- | --- |
+| Action | `ITEM` | Yes | Use `ADD` for create. Confirm update value with backend/DB team. |
+| Customer | `CUSTOMER_SYS_ID` | Yes | Use selected customer id from customer list. |
+| PIC/contact person | `PIC_SYS_ID` | Yes | Use selected PIC id from the selected customer. |
+| Site address | `SITE_ADDRESS` | Yes | Required, allow multiline if UI needs. |
+| Assigned surveyor | `ASSIGNED_SURVEYOR` | Yes | Text/dropdown as per product rule. |
+| Type of survey | `TYPE_OF_SURVEY` | Yes | Dropdown or controlled text. |
+| Type of property | `TYPE_OF_PROPERTY` | Yes | Dropdown or controlled text. |
+| Created by | `CREATED_BY` | Yes | Use logged-in user's `USER_SYS_ID` when available. |
+
+The project API accepts the object shape provided by the database developer.
+Running the full sample creates or updates project records in the dev database.
+
+## JavaScript Fetch Example
+
+```javascript
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api-dev.citysurveyors.com.sg';
+
+export async function login(userName, password) {
+  const response = await fetch(`${baseUrl}/api/auth/api-post-authenticate-user`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify([{ USER_NAME: userName, PASSWORD: password }]),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Login failed');
+  }
+
+  return data;
+}
+
+export async function addUser(token, payload) {
+  const response = await fetch(`${baseUrl}/api/user/api-post-add-update-user`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'User save failed');
+  }
+
+  return data;
+}
+
+export async function addCustomerDetails(token, payload) {
+  const response = await fetch(`${baseUrl}/api/customer/api-post-add-update-customer-details`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Customer save failed');
+  }
+
+  return data;
+}
+
+export async function getCustomerList(token, item = 'VIEW_ALL') {
+  const response = await fetch(`${baseUrl}/api/customer/api-get-view-list-customer-details?ITEM=${encodeURIComponent(item)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Customer list failed');
+  }
+
+  return data;
+}
+
+export async function addProject(token, payload) {
+  const response = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Project save failed');
+  }
+
+  return data;
+}
+```
+
+## Axios Example
+
+```javascript
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api-dev.citysurveyors.com.sg',
+});
+
+export async function login(userName, password) {
+  const { data } = await api.post('/api/auth/api-post-authenticate-user', [
+    { USER_NAME: userName, PASSWORD: password },
+  ]);
+
+  return data;
+}
+
+export async function addUser(token, payload) {
+  const { data } = await api.post('/api/user/api-post-add-update-user', payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function addCustomerDetails(token, payload) {
+  const { data } = await api.post('/api/customer/api-post-add-update-customer-details', payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function getCustomerList(token, item = 'VIEW_ALL') {
+  const { data } = await api.get('/api/customer/api-get-view-list-customer-details', {
+    params: { ITEM: item },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function addProject(token, payload) {
+  const { data } = await api.post('/api/project/api-post-add-update-project', payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+```
+
+## Suggested UI Pages
+
+### Login Page
+
+Fields:
+
+- Email or username
+- Password
+
+Behavior:
+
+- Disable submit while loading.
+- Show DB `response` message on failure.
+- Store token and user details on success.
+
+### User Management Page
+
+Fields:
+
+- Role
+- First name
+- Last name
+- Gender
+- Mobile number
+- Email
+- Organization
+- Password
+
+Behavior:
+
+- Require login token.
+- Send payload to add/update API.
+- Show success or failure message from `response`.
+- For demo, use existing sample email to show duplicate validation safely.
+
+### Customer Management Page
+
+Fields:
+
+- Customer type
+- Customer name
+- Billing address
+- PIC/contact person rows
+
+Behavior:
+
+- Require login token.
+- Load existing customers with the customer list API.
+- Send payload to customer details API.
+- Show success or failure message from `response`.
+- During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team
+  approves creating customer/PIC records in the dev database.
+
+### Project Management Page
+
+Fields:
+
+- Customer
+- PIC/contact person
+- Site address
+- Assigned surveyor
+- Type of survey
+- Type of property
+
+Behavior:
+
+- Require login token.
+- Load customers first so the user can choose `CUSTOMER_SYS_ID` and `PIC_SYS_ID`.
+- Send payload to project add/update API.
+- Show success or failure message from `response`.
+- During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team
+  approves creating project records in the dev database.
+
+## Frontend Demo Flow
+
+1. Open login page.
+2. Enter:
+   - Username: `sai@yopmail.com`
+   - Password: `Abc@1234`
+3. Submit login.
+4. Confirm user reaches dashboard or user management page.
+5. Open add user form.
+6. Submit sample existing user.
+7. Confirm duplicate email message appears.
+8. Open customer form.
+9. Submit validation-only sample or approved full customer sample.
+10. Open project form.
+11. Submit validation-only sample or approved full project sample.
+
+## Open Questions for UI Team
+
+- Where should token be stored: memory, local storage, session storage, or app
+  auth provider?
+- What password policy should be shown in the UI?
+- What APIs will provide role and organization dropdown values?
+- What is the final update-user contract?
+- What is the final update/delete customer contract?
+- What is the final update/delete project contract?
+- What APIs will provide surveyor, survey type, and property type dropdowns?
+- Should the UI support logout and token expiry messaging in this phase?
+
+## Do Not Do
+
+- Do not hardcode the JWT token in UI code.
+- Do not hardcode database credentials in UI code.
+- Do not create users with random real emails during demos unless approved.
+- Do not create customer/PIC records during demos unless approved.
+- Do not create project records during demos unless approved.
+- Do not assume old event or attendee APIs are active for City Survey.

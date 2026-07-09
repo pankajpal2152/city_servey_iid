@@ -1,12 +1,14 @@
 # City Survey Documentation Pack
 
-Date: 2026-07-08
+Date: 2026-07-09
 
 This folder contains the backend handoff documentation for the current City
 Survey Node.js API scope.
 
 ## Documents
 
+- [API URL Reference](./API_URLS.md)
+- [UI Developer Dev Server API Endpoint Sheet](./API_ENDPOINTS_DEV_SERVER.md)
 - [Module Architecture and Scenario Flow](./MODULE_ARCHITECTURE_FLOW.md)
 - [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.md)
 - [Dev Server Deployment Checklist](./DEV_SERVER_DEPLOYMENT_CHECKLIST.md)
@@ -16,13 +18,20 @@ Survey Node.js API scope.
 
 ## Current Active API Scope
 
+- `GET /health`
 - `POST /api/auth/api-post-authenticate-user`
 - `POST /api/user/api-post-add-update-user`
+- `GET /api/customer/api-get-view-list-customer-details`
+- `POST /api/customer/api-post-add-update-customer-details`
+- `POST /api/project/api-post-add-update-project`
 
 ## Current Active Route Files
 
 - `routes/auth.js`
 - `routes/user.js`
+- `routes/customer.js`
+- `routes/project.js`
+- `routes/health.js`
 
 ## Current Local Runtime
 
@@ -30,6 +39,14 @@ Survey Node.js API scope.
 - Swagger URL: `http://localhost:3103/api/api-docs`
 - Swagger server config: relative `/`, so "Try it out" calls the same host and
   port where Swagger is opened.
+- Browser Swagger tags that must be visible: `Health`, `Auth`, `User`,
+  `Customer`, and `Project`.
+
+## Current Dev Server Runtime
+
+- Dev base API URL: `https://api-dev.citysurveyors.com.sg`
+- Dev Swagger URL: `https://api-dev.citysurveyors.com.sg/api/api-docs/`
+- UI endpoint handoff file: `docs/API_ENDPOINTS_DEV_SERVER.md`
 
 Older event, attendee, payment, file upload, and email routes remain in the
 workspace, but they are not mounted from `index.js` for the City Survey scope.
