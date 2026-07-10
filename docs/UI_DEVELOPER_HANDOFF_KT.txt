@@ -48,6 +48,7 @@ http://localhost:3104
 | View user list | GET | `/api/user/api-get-view-user-list-info` | Yes |
 | Add/update user | POST | `/api/user/api-post-add-update-user` | Yes |
 | View customer list | GET | `/api/customer/api-get-view-list-customer-details` | Yes |
+| View specific customer details | GET | `/api/customer/api-get-view-specific-customer-details` | Yes |
 | Add/update customer details | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
 | View project list | GET | `/api/project/api-get-view-list-project-details` | Yes |
 | Add/update project | POST | `/api/project/api-post-add-update-project` | Yes |
@@ -282,6 +283,33 @@ procedure.
 
 Use this API to populate customer tables, dropdowns, and customer management
 screens.
+
+## View Specific Customer Details Integration
+
+### Request
+
+```http
+GET /api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4
+Authorization: Bearer <Token>
+```
+
+`CUSTOMER_SYS_ID` is required. `ITEM` is optional. If `ITEM` is omitted, the
+backend sends `PROFILE` to the stored procedure.
+
+### Expected Response Shape
+
+The response comes from `USP_GET_SPECIFIC_CUSTOMER_ACTIVITY`. UI should use the
+`response` field when `status` is `true`.
+
+```json
+{
+  "status": "true",
+  "response": {}
+}
+```
+
+Use this API when opening a customer profile/details screen from a customer list
+row.
 
 ## Add/Update Customer Details Integration
 
@@ -578,6 +606,37 @@ export async function getCustomerList(token, item = 'VIEW_ALL') {
   return data;
 }
 
+export async function getSpecificCustomerDetails(token, customerSysId, item = 'PROFILE') {
+  const response = await fetch(`${baseUrl}/api/customer/api-get-view-specific-customer-details?ITEM=${encodeURIComponent(item)}&CUSTOMER_SYS_ID=${encodeURIComponent(customerSysId)}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Customer details failed');
+  }
+
+  return data;
+}
+
+export async function getSpecificCustomerDetails(token, customerSysId, item = 'PROFILE') {
+  const { data } = await api.get('/api/customer/api-get-view-specific-customer-details', {
+    params: {
+      ITEM: item,
+      CUSTOMER_SYS_ID: customerSysId,
+    },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
 export async function getProjectList(token, item = 'VIEW_ALL') {
   const response = await fetch(`${baseUrl}/api/project/api-get-view-list-project-details?ITEM=${encodeURIComponent(item)}`, {
     method: 'GET',
@@ -791,6 +850,8 @@ Behavior:
 
 - Require login token.
 - Load existing customers with the customer list API.
+- Load one customer profile/details record with the specific customer API when
+  opening a customer row.
 - Send payload to customer details API.
 - Show success or failure message from `response`.
 - During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team

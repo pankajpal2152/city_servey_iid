@@ -64,6 +64,7 @@ response field named `Token`.
 | User     | GET    | `https://api-dev.citysurveyors.com.sg/api/user/api-get-view-user-list-info?ITEM=VIEW_ALL`            | Yes           |
 | User     | POST   | `https://api-dev.citysurveyors.com.sg/api/user/api-post-add-update-user`                             | Yes           |
 | Customer | GET    | `https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL` | Yes           |
+| Customer | GET    | `https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4` | Yes |
 | Customer | POST   | `https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details`             | Yes           |
 | Project  | GET    | `https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`   | Yes           |
 | Project  | POST   | `https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project`                       | Yes           |
@@ -81,6 +82,7 @@ POST /api/auth/api-post-authenticate-user
 GET  /api/user/api-get-view-user-list-info?ITEM=VIEW_ALL
 POST /api/user/api-post-add-update-user
 GET  /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
+GET  /api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4
 POST /api/customer/api-post-add-update-customer-details
 GET  /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 POST /api/project/api-post-add-update-project
@@ -198,7 +200,28 @@ Frontend usage:
 const url = `${API_BASE_URL}/api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL`;
 ```
 
-## 6. Add or Update Customer Details
+## 6. View Specific Customer Details
+
+```text
+GET https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4
+```
+
+Auth required: Yes
+
+Query parameters:
+
+| Name | Required | Default | Example |
+| --- | --- | --- | --- |
+| `ITEM` | No | `PROFILE` | `PROFILE` |
+| `CUSTOMER_SYS_ID` | Yes | None | `4` |
+
+Frontend usage:
+
+```js
+const url = `${API_BASE_URL}/api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4`;
+```
+
+## 7. Add or Update Customer Details
 
 ```text
 POST https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details
@@ -236,7 +259,7 @@ Request body:
 
 Running this sample with a valid token may create records in the dev database.
 
-## 7. View Project List
+## 8. View Project List
 
 ```text
 GET https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
@@ -256,7 +279,7 @@ Frontend usage:
 const url = `${API_BASE_URL}/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`;
 ```
 
-## 8. Add or Update Project
+## 9. Add or Update Project
 
 ```text
 POST https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
@@ -281,7 +304,7 @@ Request body:
 
 Running this sample with a valid token may create records in the dev database.
 
-## 9. View Master System Roles
+## 10. View Master System Roles
 
 ```text
 GET https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
@@ -303,7 +326,7 @@ Frontend usage:
 const url = `${API_BASE_URL}/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL`;
 ```
 
-## 10. Add or Update Master System Role
+## 11. Add or Update Master System Role
 
 ```text
 POST https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-system-role
@@ -345,6 +368,7 @@ The dev Swagger URL should show these API paths:
 - `GET /api/user/api-get-view-user-list-info`
 - `POST /api/user/api-post-add-update-user`
 - `GET /api/customer/api-get-view-list-customer-details`
+- `GET /api/customer/api-get-view-specific-customer-details`
 - `POST /api/customer/api-post-add-update-customer-details`
 - `GET /api/project/api-get-view-list-project-details`
 - `POST /api/project/api-post-add-update-project`

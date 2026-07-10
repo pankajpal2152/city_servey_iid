@@ -11,6 +11,7 @@ The City Survey backend currently exposes the following active APIs:
 - Add or update a user through `USP_POST_USER_PROFILE_ACTIVITY`
 - Add or update customer details through `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
 - View list customer details through `USP_GET_LIST_CUSTOMER_ACTIVITY`
+- View specific customer profile/details through `USP_GET_SPECIFIC_CUSTOMER_ACTIVITY`
 - View list project details through `USP_GET_LIST_PROJECT_ACTIVITY`
 - Add or update project through `USP_POST_PROJECT_ACTIVITY`
 - View master system roles through `USP_GET_ALL_MASTER_DATA`
@@ -28,7 +29,7 @@ not mounted in `index.js` for this City Survey phase.
 | Database pool | `config/db.js` | Creates MySQL pool from `.env` values | Active |
 | Auth route | `routes/auth.js` | Handles user authentication, calls auth stored procedure, signs JWT | Active |
 | User route | `routes/user.js` | Handles user list view plus add/update user, calls user stored procedures | Active |
-| Customer route | `routes/customer.js` | Handles customer list view plus add/update customer details and PIC records | Active |
+| Customer route | `routes/customer.js` | Handles customer list view, specific customer profile, add/update customer details, and PIC records | Active |
 | Project route | `routes/project.js` | Handles project list view plus add/update project, calls project stored procedures | Active |
 | Master route | `routes/master.js` | Handles system-role master list view plus add/update system role | Active |
 | Health route | `routes/health.js` | Returns a lightweight API status response without JWT or DB calls | Active |
@@ -70,6 +71,7 @@ flowchart LR
   UserSP["USP_POST_USER_PROFILE_ACTIVITY"]
   CustomerSP["USP_POST_CUSTOMER_DETAILS_ACTIVITY"]
   CustomerListSP["USP_GET_LIST_CUSTOMER_ACTIVITY"]
+  SpecificCustomerSP["USP_GET_SPECIFIC_CUSTOMER_ACTIVITY"]
   ProjectListSP["USP_GET_LIST_PROJECT_ACTIVITY"]
   ProjectSP["USP_POST_PROJECT_ACTIVITY"]
   MasterListSP["USP_GET_ALL_MASTER_DATA"]
@@ -97,6 +99,7 @@ flowchart LR
   DB --> UserSP
   DB --> CustomerSP
   DB --> CustomerListSP
+  DB --> SpecificCustomerSP
   DB --> ProjectListSP
   DB --> ProjectSP
   DB --> MasterListSP
@@ -106,6 +109,7 @@ flowchart LR
   UserSP --> Helper
   CustomerSP --> Helper
   CustomerListSP --> Helper
+  SpecificCustomerSP --> Helper
   ProjectListSP --> Helper
   ProjectSP --> Helper
   MasterListSP --> Helper
@@ -378,6 +382,48 @@ is treated as:
 GET /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
 ```
 
+## Request Flow: View Specific Customer Details
+
+Endpoint:
+
+`GET /api/customer/api-get-view-specific-customer-details`
+
+Stored procedure:
+
+`USP_GET_SPECIFIC_CUSTOMER_ACTIVITY('VIEW_CUSTOMER', P_ITEM, P_CUSTOMER_SYS_ID, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Customer API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Specific Customer Stored Procedure
+
+  UI->>API: GET customer profile with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Use ITEM query value or default PROFILE
+  API->>API: Validate CUSTOMER_SYS_ID
+  API->>DB: CALL USP_GET_SPECIFIC_CUSTOMER_ACTIVITY
+  DB->>SP: Fetch customer profile/details
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Customer profile/details JSON
+```
+
+Default query behavior:
+
+```text
+GET /api/customer/api-get-view-specific-customer-details?CUSTOMER_SYS_ID=4
+```
+
+is treated as:
+
+```text
+GET /api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4
+```
+
 ## Request Flow: View Project List Details
 
 Endpoint:
@@ -574,6 +620,7 @@ object before calling the stored procedure.
 | Invalid bearer token | `POST /api/user/api-post-add-update-user` | Bad token | HTTP 403 |
 | Missing `ITEM` | `POST /api/user/api-post-add-update-user` | `{}` with token | HTTP 400, `ITEM is required` |
 | View customer list | `GET /api/customer/api-get-view-list-customer-details` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, customer list with nested `PIC_DETAILS` |
+| View specific customer details | `GET /api/customer/api-get-view-specific-customer-details` | Valid token, `CUSTOMER_SYS_ID`, optional `ITEM=PROFILE` | HTTP 200, customer profile/details response |
 | Add customer details | `POST /api/customer/api-post-add-update-customer-details` | Valid customer payload, valid token | HTTP 200, DB response, customer/PIC records may be created |
 | Missing customer fields | `POST /api/customer/api-post-add-update-customer-details` | Missing required ADD field, valid token | HTTP 400 with validation response |
 | View project list | `GET /api/project/api-get-view-list-project-details` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, project list response |
@@ -595,6 +642,7 @@ Backend owns:
 - Stored procedure invocation
 - Procedure response normalization
 - User list and add/update payload handling
+- Specific customer id validation
 - Customer payload validation before DB call
 
 Database owns:
@@ -602,6 +650,7 @@ Database owns:
 - Credential validation
 - User list query rules
 - User existence validation
+- Specific customer profile query rules
 - User insert/update rules
 - Role and organization references
 - Project insert/update rules

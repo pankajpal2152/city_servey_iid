@@ -1,7 +1,7 @@
 # City Survey Node.js API
 
 Express backend for the City Survey application. The active scope is user
-authentication, user list/add/update, customer add/update, project list/add/update,
+authentication, user list/add/update, customer list/profile/add/update, project list/add/update,
 master system role list/add/update, and API health checks
 through Node.js, Express, JWT, Swagger, and MySQL stored procedures.
 
@@ -26,6 +26,7 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 | User | GET | `/api/user/api-get-view-user-list-info` | Yes |
 | User | POST | `/api/user/api-post-add-update-user` | Yes |
 | Customer | GET | `/api/customer/api-get-view-list-customer-details` | Yes |
+| Customer | GET | `/api/customer/api-get-view-specific-customer-details` | Yes |
 | Customer | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
 | Project | GET | `/api/project/api-get-view-list-project-details` | Yes |
 | Project | POST | `/api/project/api-post-add-update-project` | Yes |
@@ -91,6 +92,7 @@ Swagger must show these City Survey tags and APIs in the browser:
 - `User`: `GET /api/user/api-get-view-user-list-info`
 - `User`: `POST /api/user/api-post-add-update-user`
 - `Customer`: `GET /api/customer/api-get-view-list-customer-details`
+- `Customer`: `GET /api/customer/api-get-view-specific-customer-details`
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
 - `Project`: `GET /api/project/api-get-view-list-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
@@ -183,6 +185,32 @@ ITEM=VIEW_ALL
 ```
 
 If `ITEM` is not provided, the API defaults to `VIEW_ALL`.
+
+### View Specific Customer Details
+
+`GET /api/customer/api-get-view-specific-customer-details`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_SPECIFIC_CUSTOMER_ACTIVITY('VIEW_CUSTOMER', 'PROFILE', 4, @ERRNO, @ERRMSG);
+```
+
+Required query parameter:
+
+```text
+CUSTOMER_SYS_ID=4
+```
+
+Optional query parameter:
+
+```text
+ITEM=PROFILE
+```
+
+If `ITEM` is not provided, the API defaults to `PROFILE`.
 
 ### View Project List Details
 

@@ -26,6 +26,9 @@ Completed items:
 - Implemented active customer list details API:
   - `GET /api/customer/api-get-view-list-customer-details`
   - Procedure: `USP_GET_LIST_CUSTOMER_ACTIVITY`
+- Implemented active specific customer details API:
+  - `GET /api/customer/api-get-view-specific-customer-details`
+  - Procedure: `USP_GET_SPECIFIC_CUSTOMER_ACTIVITY`
 - Implemented active add/update project API:
   - `POST /api/project/api-post-add-update-project`
   - Procedure: `USP_POST_PROJECT_ACTIVITY`
@@ -123,6 +126,7 @@ Database checks:
   - `USP_GET_USER_LIST_ACTIVITY`
   - `USP_POST_USER_PROFILE_ACTIVITY`
   - `USP_GET_LIST_CUSTOMER_ACTIVITY`
+  - `USP_GET_SPECIFIC_CUSTOMER_ACTIVITY`
   - `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
   - `USP_GET_LIST_PROJECT_ACTIVITY`
   - `USP_POST_PROJECT_ACTIVITY`
@@ -138,6 +142,8 @@ HTTP API smoke test:
 - User list API returns read-only user data when records exist
 - Protected add/update API accepted token
 - Customer list API returns read-only customer data with nested `PIC_DETAILS`
+- Specific customer API returns read-only customer profile/details data for a
+  valid customer id
 - Existing sample email returned `This Email Id Already Exists`
 - Sample email count stayed `1 -> 1`, so no duplicate test user was created
 - Customer route validation can be tested safely with `{ "ITEM": "ADD" }`;
@@ -286,6 +292,36 @@ Default query:
 ITEM=VIEW_ALL
 ```
 
+### View Specific Customer Details
+
+Endpoint:
+
+`GET /api/customer/api-get-view-specific-customer-details`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_SPECIFIC_CUSTOMER_ACTIVITY('VIEW_CUSTOMER', 'PROFILE', 4, @ERRNO, @ERRMSG);
+```
+
+Required query:
+
+```text
+CUSTOMER_SYS_ID=4
+```
+
+Default query:
+
+```text
+ITEM=PROFILE
+```
+
 ### View Master System Roles
 
 Endpoint:
@@ -429,6 +465,7 @@ Walkthrough order:
 7. Show `routes/customer.js`:
    - requires JWT middleware
    - calls customer list procedure for view/list
+   - validates `CUSTOMER_SYS_ID` and calls specific customer procedure
    - validates `ITEM` and required `ADD` fields
    - calls customer details procedure
 8. Show `routes/project.js`:

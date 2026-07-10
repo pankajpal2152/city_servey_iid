@@ -11,6 +11,7 @@ RDS database and that the active APIs work end to end:
 - View user list with JWT protection
 - Add/update user with JWT protection
 - View customer list with JWT protection
+- View specific customer details with JWT protection
 - Add/update customer details with JWT protection
 - View project list with JWT protection
 - Add/update project with JWT protection
@@ -86,6 +87,7 @@ Expected:
   - `GET /api/user/api-get-view-user-list-info`
   - `POST /api/user/api-post-add-update-user`
   - `GET /api/customer/api-get-view-list-customer-details`
+  - `GET /api/customer/api-get-view-specific-customer-details`
   - `POST /api/customer/api-post-add-update-customer-details`
   - `GET /api/project/api-get-view-list-project-details`
   - `POST /api/project/api-post-add-update-project`
@@ -276,7 +278,34 @@ Expected:
 - Response contains `status: true`
 - Response contains customer rows and nested `PIC_DETAILS` when data exists
 
-### Step 9: Test Protected Customer API Routing Safely
+### Step 9: Test Protected Specific Customer Details API
+
+Open:
+
+`GET /api/customer/api-get-view-specific-customer-details`
+
+Click:
+
+`Try it out`
+
+Use:
+
+```text
+ITEM=PROFILE
+CUSTOMER_SYS_ID=4
+```
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status: true`
+- Response contains the specific customer profile/details when the customer id exists
+
+### Step 10: Test Protected Customer API Routing Safely
 
 Open:
 
@@ -312,7 +341,7 @@ customer record.
 Only execute the full database developer sample if the team approves creating
 real dev DB customer and PIC records.
 
-### Step 10: Test Protected Project List API
+### Step 11: Test Protected Project List API
 
 Open:
 
@@ -334,7 +363,7 @@ Expected:
 - Response contains `status: true`
 - Response contains project rows when data exists
 
-### Step 11: Test Protected Project API Routing Safely
+### Step 12: Test Protected Project API Routing Safely
 
 Open:
 
@@ -370,7 +399,7 @@ record.
 Only execute the full database developer sample if the team approves creating
 real dev DB project records.
 
-### Step 12: Test Protected System Role List API
+### Step 13: Test Protected System Role List API
 
 Open:
 
@@ -393,7 +422,7 @@ Expected:
 - Response contains `status: true`
 - Response contains system role rows when data exists
 
-### Step 13: Test Protected System Role API Routing Safely
+### Step 14: Test Protected System Role API Routing Safely
 
 Open:
 
@@ -445,14 +474,15 @@ real dev DB system-role records.
 9. "The duplicate email response proves API to DB integration without creating a
    new user during the demo."
 10. "Then I will show the read-only customer list API."
-11. "For customer add/update, I will show the protected route validation. The
+11. "Then I will open one specific customer profile/details record."
+12. "For customer add/update, I will show the protected route validation. The
    full sample is a write operation and should be run only with team approval."
-12. "Then I will show the read-only project list API."
-13. "For project add/update, I will show the protected route validation. The
+13. "Then I will show the read-only project list API."
+14. "For project add/update, I will show the protected route validation. The
    full sample is also a write operation and should be run only with team
    approval."
-14. "Then I will show the read-only system role list API."
-15. "For system role add/update, I will show the protected route validation. The
+15. "Then I will show the read-only system role list API."
+16. "For system role add/update, I will show the protected route validation. The
    full sample is also a write operation and should be run only with team
    approval."
 
@@ -527,6 +557,19 @@ const customerListResponse = await fetch(`${baseUrl}/api/customer/api-get-view-l
 });
 
 console.log(customerListResponse.status, await customerListResponse.json());
+```
+
+To view one specific customer profile:
+
+```javascript
+const specificCustomerResponse = await fetch(`${baseUrl}/api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+});
+
+console.log(specificCustomerResponse.status, await specificCustomerResponse.json());
 ```
 
 To validate the customer route without writing data:

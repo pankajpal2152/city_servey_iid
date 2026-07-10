@@ -147,6 +147,7 @@ Verify:
 - Procedure `USP_GET_USER_LIST_ACTIVITY` exists
 - Procedure `USP_POST_USER_PROFILE_ACTIVITY` exists
 - Procedure `USP_GET_LIST_CUSTOMER_ACTIVITY` exists
+- Procedure `USP_GET_SPECIFIC_CUSTOMER_ACTIVITY` exists
 - Procedure `USP_POST_CUSTOMER_DETAILS_ACTIVITY` exists
 - Procedure `USP_GET_LIST_PROJECT_ACTIVITY` exists
 - Procedure `USP_POST_PROJECT_ACTIVITY` exists
@@ -170,6 +171,7 @@ Verify with Swagger:
 - Protected user list API returns `VIEW_ALL` response
 - Protected user API accepts the token
 - Protected customer list API returns `VIEW_ALL` response
+- Protected specific customer API returns `PROFILE` response for a valid customer id
 - Protected customer API validates payload when token is provided
 - Protected project list API returns `VIEW_ALL` response
 - Protected project API validates payload when token is provided

@@ -70,7 +70,7 @@ const mysql = require('mysql2/promise');
        FROM INFORMATION_SCHEMA.ROUTINES
       WHERE ROUTINE_SCHEMA = ?
         AND ROUTINE_TYPE = 'PROCEDURE'
-        AND ROUTINE_NAME IN (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        AND ROUTINE_NAME IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ORDER BY ROUTINE_NAME`,
     [
       process.env.DB_NAME,
@@ -78,6 +78,7 @@ const mysql = require('mysql2/promise');
       'USP_GET_USER_LIST_ACTIVITY',
       'USP_POST_USER_PROFILE_ACTIVITY',
       'USP_GET_LIST_CUSTOMER_ACTIVITY',
+      'USP_GET_SPECIFIC_CUSTOMER_ACTIVITY',
       'USP_POST_CUSTOMER_DETAILS_ACTIVITY',
       'USP_GET_LIST_PROJECT_ACTIVITY',
       'USP_POST_PROJECT_ACTIVITY',
@@ -144,6 +145,7 @@ Confirm these tags and endpoints are visible:
 - `User`: `GET /api/user/api-get-view-user-list-info`
 - `User`: `POST /api/user/api-post-add-update-user`
 - `Customer`: `GET /api/customer/api-get-view-list-customer-details`
+- `Customer`: `GET /api/customer/api-get-view-specific-customer-details`
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
 - `Project`: `GET /api/project/api-get-view-list-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
@@ -266,6 +268,20 @@ Expected:
 
 - `status: true`
 - `response` contains customer list data when records exist
+
+Then test protected specific customer details API without writing data:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4" `
+  -Method Get `
+  -Headers $headers
+```
+
+Expected:
+
+- `status: true`
+- `response` contains customer profile/details data when the customer id exists
 
 Then test protected project list API without writing data:
 
@@ -485,6 +501,14 @@ async function getEmailCount(connection) {
     });
     const customerListJson = await customerListResponse.json();
 
+    const specificCustomerResponse = await fetch(`${baseUrl}/api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+    });
+    const specificCustomerJson = await specificCustomerResponse.json();
+
     const projectListResponse = await fetch(`${baseUrl}/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`, {
       method: 'GET',
       headers: {
@@ -539,6 +563,8 @@ async function getEmailCount(connection) {
       customer_validation_response: customerValidationJson.response,
       customer_list_http_status: customerListResponse.status,
       customer_list_status: customerListJson.status,
+      specific_customer_http_status: specificCustomerResponse.status,
+      specific_customer_status: specificCustomerJson.status,
       project_list_http_status: projectListResponse.status,
       project_list_status: projectListJson.status,
       project_validation_http_status: projectValidationResponse.status,
@@ -576,6 +602,8 @@ Expected:
 - `customer_validation_response: CUSTOMER_TYPE is required`
 - `customer_list_http_status: 200`
 - `customer_list_status: true`
+- `specific_customer_http_status: 200`
+- `specific_customer_status: true`
 - `project_list_http_status: 200`
 - `project_list_status: true`
 - `project_validation_http_status: 400`

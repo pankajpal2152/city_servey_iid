@@ -57,19 +57,25 @@ URL: https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-list-custome
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-6. Add or Update Customer Details
+6. View Specific Customer Details
+Method: GET
+URL: https://api-dev.citysurveyors.com.sg/api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
+7. Add or Update Customer Details
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-7. View Project List
+8. View Project List
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-8. Add or Update Project
+9. Add or Update Project
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
 Auth Required: Yes
@@ -86,13 +92,13 @@ Body:
   "CREATED_BY": 1
 }
 
-9. View Master System Roles
+10. View Master System Roles
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-10. Add or Update Master System Role
+11. Add or Update Master System Role
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-system-role
 Auth Required: Yes
@@ -115,6 +121,7 @@ POST /api/auth/api-post-authenticate-user
 GET  /api/user/api-get-view-user-list-info?ITEM=VIEW_ALL
 POST /api/user/api-post-add-update-user
 GET  /api/customer/api-get-view-list-customer-details?ITEM=VIEW_ALL
+GET  /api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_SYS_ID=4
 POST /api/customer/api-post-add-update-customer-details
 GET  /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 POST /api/project/api-post-add-update-project

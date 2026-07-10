@@ -23,7 +23,7 @@ const options = {
       },
       {
         name: 'Customer',
-        description: 'City Survey customer details and PIC add/update APIs'
+        description: 'City Survey customer list, profile, and PIC add/update APIs'
       },
       {
         name: 'Project',
