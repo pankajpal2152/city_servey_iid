@@ -41,6 +41,18 @@ Completed items:
 - Implemented active add/update master system role API:
   - `POST /api/master/api-post-add-update-master-system-role`
   - Procedure: `USP_POST_ALL_MASTER_DATA`
+- Implemented active master survey type list API:
+  - `GET /api/master/api-get-view-master-survey-type`
+  - Procedure: `USP_GET_ALL_MASTER_DATA`
+- Implemented active add/update master survey type API:
+  - `POST /api/master/api-post-add-update-master-survey-type`
+  - Procedure: `USP_POST_ALL_MASTER_DATA`
+- Implemented active master property type list API:
+  - `GET /api/master/api-get-view-master-property-type`
+  - Procedure: `USP_GET_ALL_MASTER_DATA`
+- Implemented active add/update master property type API:
+  - `POST /api/master/api-post-add-update-master-property-type`
+  - Procedure: `USP_POST_ALL_MASTER_DATA`
 - Merged senior developer health API:
   - `GET /health`
   - Route: `routes/health.js`
@@ -156,6 +168,14 @@ HTTP API smoke test:
   read-only API.
 - System role add/update route validation can be tested safely with
   `{ "ITEM": "ADD" }`; full system role samples are write operations.
+- Survey type list route can be tested safely with `ITEM=VIEW_ALL`; it is a
+  read-only API.
+- Survey type add/update route validation can be tested safely with
+  `{ "ITEM": "ADD" }`; full survey type samples are write operations.
+- Property type list route can be tested safely with `ITEM=VIEW_ALL`; it is a
+  read-only API.
+- Property type add/update route validation can be tested safely with
+  `{ "ITEM": "ADD" }`; full property type samples are write operations.
 
 ## Current Working API Contracts
 
@@ -337,13 +357,15 @@ Authorization: Bearer <Token>
 Stored procedure call:
 
 ```sql
-CALL USP_GET_ALL_MASTER_DATA('VIEW_SYSTEM_ROLE', 'VIEW_ALL', NULL, NULL, @ERRNO, @ERRMSG);
+CALL USP_GET_ALL_MASTER_DATA('VIEW_SYSTEM_ROLE', 'VIEW_ALL', '0', 0, @ERRNO, @ERRMSG);
 ```
 
 Default query:
 
 ```text
 ITEM=VIEW_ALL
+RECORD_SYS_ID=0
+ORGANIZATION_SYS_ID=0
 ```
 
 ### Add or Update Master System Role
@@ -364,11 +386,108 @@ Request:
 {
   "ITEM": "ADD",
   "RECORD_SYS_ID": "0",
-  "ORGANIZATION_SYS_ID": "1",
   "SYSTEM_ROLE": "Business Admin",
   "ROLE_DESC": "Business Admin",
   "USER_TYPE": "Internal",
   "CREATED_BY": 1
+}
+```
+
+### View Master Survey Type
+
+Endpoint:
+
+`GET /api/master/api-get-view-master-survey-type`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_ALL_MASTER_DATA('VIEW_SURVEY_TYPE', 'VIEW_ALL', 0, 0, @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=VIEW_ALL
+RECORD_SYS_ID=0
+ORGANIZATION_SYS_ID=0
+```
+
+### Add or Update Master Survey Type
+
+Endpoint:
+
+`POST /api/master/api-post-add-update-master-survey-type`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Request:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "SURVEY_TYPE": "Seminer",
+  "CREATED_BY": "1"
+}
+```
+
+### View Master Property Type
+
+Endpoint:
+
+`GET /api/master/api-get-view-master-property-type`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_ALL_MASTER_DATA('VIEW_PROPERTY_TYPE', 'VIEW_ALL', 0, 0, @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=VIEW_ALL
+RECORD_SYS_ID=0
+ORGANIZATION_SYS_ID=0
+```
+
+### Add or Update Master Property Type
+
+Endpoint:
+
+`POST /api/master/api-post-add-update-master-property-type`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Request:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "PROPERTY_TYPE": "Seminer",
+  "CREATED_BY": "1"
 }
 ```
 
@@ -502,6 +621,10 @@ Confirmed:
   - `ADD_UPDATE_PROJECT`
   - `VIEW_SYSTEM_ROLE`
   - `ADD_UPDATE_SYSTEM_ROLE`
+  - `VIEW_SURVEY_TYPE`
+  - `ADD_UPDATE_SURVEY_TYPE`
+  - `VIEW_PROPERTY_TYPE`
+  - `ADD_UPDATE_PROPERTY_TYPE`
 
 DB follow-up points:
 

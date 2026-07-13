@@ -177,6 +177,10 @@ Verify with Swagger:
 - Protected project API validates payload when token is provided
 - Protected system-role list API returns `VIEW_ALL` response
 - Protected system-role API validates payload when token is provided
+- Protected survey-type list API returns `VIEW_ALL` response
+- Protected survey-type API validates payload when token is provided
+- Protected property-type list API returns `VIEW_ALL` response
+- Protected property-type API validates payload when token is provided
 - Duplicate sample email returns `This Email Id Already Exists`
 
 ## 9. Dev Server Process Checklist
@@ -220,6 +224,10 @@ Then run:
 4. Project validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `CUSTOMER_SYS_ID is required`.
 5. System-role validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+   `RECORD_SYS_ID is required`.
+6. Survey-type validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+   `RECORD_SYS_ID is required`.
+7. Property-type validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `RECORD_SYS_ID is required`.
 
 ## 11. Rollback Checklist

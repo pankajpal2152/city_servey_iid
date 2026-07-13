@@ -68,8 +68,12 @@ response field named `Token`.
 | Customer | POST   | `https://api-dev.citysurveyors.com.sg/api/customer/api-post-add-update-customer-details`             | Yes           |
 | Project  | GET    | `https://api-dev.citysurveyors.com.sg/api/project/api-get-view-list-project-details?ITEM=VIEW_ALL`   | Yes           |
 | Project  | POST   | `https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project`                       | Yes           |
-| Master   | GET    | `https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL`     | Yes           |
+| Master   | GET    | `https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0` | Yes |
 | Master   | POST   | `https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-system-role`             | Yes           |
+| Master   | GET    | `https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0` | Yes |
+| Master   | POST   | `https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-survey-type`             | Yes           |
+| Master   | GET    | `https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0` | Yes |
+| Master   | POST   | `https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-property-type`           | Yes           |
 
 ## Relative API Paths
 
@@ -86,8 +90,12 @@ GET  /api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_
 POST /api/customer/api-post-add-update-customer-details
 GET  /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 POST /api/project/api-post-add-update-project
-GET  /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+GET  /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 POST /api/master/api-post-add-update-master-system-role
+GET  /api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+POST /api/master/api-post-add-update-master-survey-type
+GET  /api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+POST /api/master/api-post-add-update-master-property-type
 ```
 
 ## 1. Health Check
@@ -307,7 +315,7 @@ Running this sample with a valid token may create records in the dev database.
 ## 10. View Master System Roles
 
 ```text
-GET https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+GET https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 ```
 
 Auth required: Yes
@@ -317,13 +325,13 @@ Query parameters:
 | Name | Required | Default | Example |
 | --- | --- | --- | --- |
 | `ITEM` | No | `VIEW_ALL` | `VIEW_ALL` |
-| `RECORD_SYS_ID` | No | `null` | `1` |
-| `ORGANIZATION_SYS_ID` | No | `null` | `1` |
+| `RECORD_SYS_ID` | No | `0` | `0` |
+| `ORGANIZATION_SYS_ID` | No | `0` | `0` |
 
 Frontend usage:
 
 ```js
-const url = `${API_BASE_URL}/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL`;
+const url = `${API_BASE_URL}/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`;
 ```
 
 ## 11. Add or Update Master System Role
@@ -340,11 +348,96 @@ Request body:
 {
   "ITEM": "ADD",
   "RECORD_SYS_ID": "0",
-  "ORGANIZATION_SYS_ID": "1",
   "SYSTEM_ROLE": "Business Admin",
   "ROLE_DESC": "Business Admin",
   "USER_TYPE": "Internal",
   "CREATED_BY": 1
+}
+```
+
+Running this sample with a valid token may create records in the dev database.
+
+## 12. View Master Survey Type
+
+```text
+GET https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+```
+
+Auth required: Yes
+
+Query parameters:
+
+| Name | Required | Default | Example |
+| --- | --- | --- | --- |
+| `ITEM` | No | `VIEW_ALL` | `VIEW_ALL` |
+| `RECORD_SYS_ID` | No | `0` | `0` |
+| `ORGANIZATION_SYS_ID` | No | `0` | `0` |
+
+Frontend usage:
+
+```js
+const url = `${API_BASE_URL}/api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`;
+```
+
+## 13. Add or Update Master Survey Type
+
+```text
+POST https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-survey-type
+```
+
+Auth required: Yes
+
+Request body:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "SURVEY_TYPE": "Seminer",
+  "CREATED_BY": "1"
+}
+```
+
+Running this sample with a valid token may create records in the dev database.
+
+## 14. View Master Property Type
+
+```text
+GET https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+```
+
+Auth required: Yes
+
+Query parameters:
+
+| Name | Required | Default | Example |
+| --- | --- | --- | --- |
+| `ITEM` | No | `VIEW_ALL` | `VIEW_ALL` |
+| `RECORD_SYS_ID` | No | `0` | `0` |
+| `ORGANIZATION_SYS_ID` | No | `0` | `0` |
+
+Frontend usage:
+
+```js
+const url = `${API_BASE_URL}/api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`;
+```
+
+## 15. Add or Update Master Property Type
+
+```text
+POST https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-property-type
+```
+
+Auth required: Yes
+
+Request body:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "PROPERTY_TYPE": "Seminer",
+  "CREATED_BY": "1"
 }
 ```
 
@@ -374,6 +467,10 @@ The dev Swagger URL should show these API paths:
 - `POST /api/project/api-post-add-update-project`
 - `GET /api/master/api-get-view-master-system-roles`
 - `POST /api/master/api-post-add-update-master-system-role`
+- `GET /api/master/api-get-view-master-survey-type`
+- `POST /api/master/api-post-add-update-master-survey-type`
+- `GET /api/master/api-get-view-master-property-type`
+- `POST /api/master/api-post-add-update-master-property-type`
 
 After deployment, verify the Swagger list at:
 

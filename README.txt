@@ -2,7 +2,7 @@
 
 Express backend for the City Survey application. The active scope is user
 authentication, user list/add/update, customer list/profile/add/update, project list/add/update,
-master system role list/add/update, and API health checks
+master system role list/add/update, master survey type list/add/update, master property type list/add/update, and API health checks
 through Node.js, Express, JWT, Swagger, and MySQL stored procedures.
 
 ## Active APIs
@@ -10,7 +10,7 @@ through Node.js, Express, JWT, Swagger, and MySQL stored procedures.
 Dev server base URL for frontend integration:
 
 ```text
-https://api-dev.citysurveyors.com.sg
+api-dev.citysurveyors.com.sg
 ```
 
 Dev Swagger URL:
@@ -19,19 +19,23 @@ Dev Swagger URL:
 https://api-dev.citysurveyors.com.sg/api/api-docs/
 ```
 
-| Module | Method | Endpoint | Auth |
-| --- | --- | --- | --- |
-| Health | GET | `/health` | No |
-| Auth | POST | `/api/auth/api-post-authenticate-user` | No |
-| User | GET | `/api/user/api-get-view-user-list-info` | Yes |
-| User | POST | `/api/user/api-post-add-update-user` | Yes |
-| Customer | GET | `/api/customer/api-get-view-list-customer-details` | Yes |
-| Customer | GET | `/api/customer/api-get-view-specific-customer-details` | Yes |
-| Customer | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
-| Project | GET | `/api/project/api-get-view-list-project-details` | Yes |
-| Project | POST | `/api/project/api-post-add-update-project` | Yes |
-| Master | GET | `/api/master/api-get-view-master-system-roles` | Yes |
-| Master | POST | `/api/master/api-post-add-update-master-system-role` | Yes |
+| Module   | Method | Endpoint                                                 | Auth |
+| -------- | ------ | -------------------------------------------------------- | ---- |
+| Health   | GET    | `/health`                                              | No   |
+| Auth     | POST   | `/api/auth/api-post-authenticate-user`                 | No   |
+| User     | GET    | `/api/user/api-get-view-user-list-info`                | Yes  |
+| User     | POST   | `/api/user/api-post-add-update-user`                   | Yes  |
+| Customer | GET    | `/api/customer/api-get-view-list-customer-details`     | Yes  |
+| Customer | GET    | `/api/customer/api-get-view-specific-customer-details` | Yes  |
+| Customer | POST   | `/api/customer/api-post-add-update-customer-details`   | Yes  |
+| Project  | GET    | `/api/project/api-get-view-list-project-details`       | Yes  |
+| Project  | POST   | `/api/project/api-post-add-update-project`             | Yes  |
+| Master   | GET    | `/api/master/api-get-view-master-system-roles`         | Yes  |
+| Master   | POST   | `/api/master/api-post-add-update-master-system-role`   | Yes  |
+| Master   | GET    | `/api/master/api-get-view-master-survey-type`          | Yes  |
+| Master   | POST   | `/api/master/api-post-add-update-master-survey-type`   | Yes  |
+| Master   | GET    | `/api/master/api-get-view-master-property-type`        | Yes  |
+| Master   | POST   | `/api/master/api-post-add-update-master-property-type` | Yes  |
 
 ## Setup & Running Locally
 
@@ -98,6 +102,10 @@ Swagger must show these City Survey tags and APIs in the browser:
 - `Project`: `POST /api/project/api-post-add-update-project`
 - `Master`: `GET /api/master/api-get-view-master-system-roles`
 - `Master`: `POST /api/master/api-post-add-update-master-system-role`
+- `Master`: `GET /api/master/api-get-view-master-survey-type`
+- `Master`: `POST /api/master/api-post-add-update-master-survey-type`
+- `Master`: `GET /api/master/api-get-view-master-property-type`
+- `Master`: `POST /api/master/api-post-add-update-master-property-type`
 
 If Swagger opens but an API is missing, restart `npm run dev` and hard refresh
 the browser with `Ctrl + F5`.
@@ -256,19 +264,19 @@ Requires `Authorization: Bearer <token>`.
 Calls:
 
 ```sql
-CALL USP_GET_ALL_MASTER_DATA('VIEW_SYSTEM_ROLE', 'VIEW_ALL', NULL, NULL, @ERRNO, @ERRMSG);
+CALL USP_GET_ALL_MASTER_DATA('VIEW_SYSTEM_ROLE', 'VIEW_ALL', '0', 0, @ERRNO, @ERRMSG);
 ```
 
 Optional query parameters:
 
 ```text
 ITEM=VIEW_ALL
-RECORD_SYS_ID=
-ORGANIZATION_SYS_ID=
+RECORD_SYS_ID=0
+ORGANIZATION_SYS_ID=0
 ```
 
 If `ITEM` is not provided, the API defaults to `VIEW_ALL`. If
-`RECORD_SYS_ID` or `ORGANIZATION_SYS_ID` are not provided, the API sends `NULL`
+`RECORD_SYS_ID` or `ORGANIZATION_SYS_ID` are not provided, the API sends `0`
 to the stored procedure.
 
 ### Add or Update Master System Role
@@ -280,11 +288,89 @@ Requires `Authorization: Bearer <token>`.
 Calls:
 
 ```sql
-CALL USP_POST_ALL_MASTER_DATA('ADD_UPDATE_SYSTEM_ROLE', '{"ITEM":"ADD","RECORD_SYS_ID":"0","ORGANIZATION_SYS_ID":"1","SYSTEM_ROLE":"Business Admin","ROLE_DESC":"Business Admin","USER_TYPE":"Internal","CREATED_BY":1}', @ERRNO, @ERRMSG);
+CALL USP_POST_ALL_MASTER_DATA('ADD_UPDATE_SYSTEM_ROLE', '{"ITEM":"ADD","RECORD_SYS_ID":"0","SYSTEM_ROLE":"Business Admin","ROLE_DESC":"Business Admin","USER_TYPE":"Internal","CREATED_BY":1}', @ERRNO, @ERRMSG);
 ```
 
 Running the full sample with a valid token may create system role records in the
 dev database.
+
+### View Master Survey Type
+
+`GET /api/master/api-get-view-master-survey-type`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_ALL_MASTER_DATA('VIEW_SURVEY_TYPE', 'VIEW_ALL', 0, 0, @ERRNO, @ERRMSG);
+```
+
+Optional query parameters:
+
+```text
+ITEM=VIEW_ALL
+RECORD_SYS_ID=0
+ORGANIZATION_SYS_ID=0
+```
+
+If `ITEM` is not provided, the API defaults to `VIEW_ALL`. If
+`RECORD_SYS_ID` or `ORGANIZATION_SYS_ID` are not provided, the API sends `0`
+to the stored procedure.
+
+### Add or Update Master Survey Type
+
+`POST /api/master/api-post-add-update-master-survey-type`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_POST_ALL_MASTER_DATA('ADD_UPDATE_SURVEY_TYPE', '{"ITEM":"ADD","RECORD_SYS_ID":"0","SURVEY_TYPE":"Seminer","CREATED_BY":"1"}', @ERRNO, @ERRMSG);
+```
+
+Running the full sample with a valid token may create survey type records in the
+dev database.
+
+### View Master Property Type
+
+`GET /api/master/api-get-view-master-property-type`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_ALL_MASTER_DATA('VIEW_PROPERTY_TYPE', 'VIEW_ALL', 0, 0, @ERRNO, @ERRMSG);
+```
+
+Optional query parameters:
+
+```text
+ITEM=VIEW_ALL
+RECORD_SYS_ID=0
+ORGANIZATION_SYS_ID=0
+```
+
+If `ITEM` is not provided, the API defaults to `VIEW_ALL`. If
+`RECORD_SYS_ID` or `ORGANIZATION_SYS_ID` are not provided, the API sends `0`
+to the stored procedure.
+
+### Add or Update Master Property Type
+
+`POST /api/master/api-post-add-update-master-property-type`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_POST_ALL_MASTER_DATA('ADD_UPDATE_PROPERTY_TYPE', '{"ITEM":"ADD","RECORD_SYS_ID":"0","PROPERTY_TYPE":"Seminer","CREATED_BY":"1"}', @ERRNO, @ERRMSG);
+```
+
+Running the full sample with a valid token may create property type records in
+the dev database.
 
 ## Git Branching & Deployment Strategy
 
@@ -293,10 +379,10 @@ environment segregation and robust release processes.
 
 ### Environments & Branch Mapping
 
-| Branch | Target Environment | Deployment Trigger |
-| :--- | :--- | :--- |
+| Branch          | Target Environment          | Deployment Trigger      |
+| :-------------- | :-------------------------- | :---------------------- |
 | `development` | **Development (Dev)** | Automatic on merge/push |
-| `production` | **Production (Prod)** | Triggered on release |
+| `production`  | **Production (Prod)** | Triggered on release    |
 
 ### Environment Variables Policy
 

@@ -31,7 +31,7 @@ const options = {
       },
       {
         name: 'Master',
-        description: 'City Survey system role master list and add/update APIs'
+        description: 'City Survey master data list and add/update APIs'
       }
     ],
     components: {

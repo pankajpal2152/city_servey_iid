@@ -16,6 +16,10 @@ The City Survey backend currently exposes the following active APIs:
 - Add or update project through `USP_POST_PROJECT_ACTIVITY`
 - View master system roles through `USP_GET_ALL_MASTER_DATA`
 - Add or update master system role through `USP_POST_ALL_MASTER_DATA`
+- View master survey type through `USP_GET_ALL_MASTER_DATA`
+- Add or update master survey type through `USP_POST_ALL_MASTER_DATA`
+- View master property type through `USP_GET_ALL_MASTER_DATA`
+- Add or update master property type through `USP_POST_ALL_MASTER_DATA`
 - Check API process health through `GET /health`
 
 All other legacy event, attendee, payment, file upload, and email modules are
@@ -31,7 +35,7 @@ not mounted in `index.js` for this City Survey phase.
 | User route | `routes/user.js` | Handles user list view plus add/update user, calls user stored procedures | Active |
 | Customer route | `routes/customer.js` | Handles customer list view, specific customer profile, add/update customer details, and PIC records | Active |
 | Project route | `routes/project.js` | Handles project list view plus add/update project, calls project stored procedures | Active |
-| Master route | `routes/master.js` | Handles system-role master list view plus add/update system role | Active |
+| Master route | `routes/master.js` | Handles system-role, survey-type, and property-type master list view plus add/update APIs | Active |
 | Health route | `routes/health.js` | Returns a lightweight API status response without JWT or DB calls | Active |
 | JWT middleware | `middlewares/auth.js` | Validates `Authorization: Bearer <token>` before protected APIs | Active |
 | Procedure helper | `utils/procedureResponse.js` | Normalizes stored procedure `JSON_VALUE` responses | Active |
@@ -536,7 +540,7 @@ sequenceDiagram
   API->>JWT: Validate JWT
   JWT-->>API: Attach req.user
   API->>API: Use ITEM query value or default VIEW_ALL
-  API->>API: Use optional RECORD_SYS_ID and ORGANIZATION_SYS_ID filters
+  API->>API: Use RECORD_SYS_ID and ORGANIZATION_SYS_ID query values or default 0
   API->>DB: CALL USP_GET_ALL_MASTER_DATA
   DB->>SP: Fetch system role master data
   SP-->>DB: JSON_VALUE response
@@ -553,10 +557,10 @@ GET /api/master/api-get-view-master-system-roles
 is treated as:
 
 ```text
-GET /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+GET /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 ```
 
-Missing `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` values are sent as `NULL`.
+Missing `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` values are sent as `0`.
 
 ## Request Flow: Add or Update Master System Role
 
@@ -595,11 +599,184 @@ The API accepts the object shape provided by the database developer:
 {
   "ITEM": "ADD",
   "RECORD_SYS_ID": "0",
-  "ORGANIZATION_SYS_ID": "1",
   "SYSTEM_ROLE": "Business Admin",
   "ROLE_DESC": "Business Admin",
   "USER_TYPE": "Internal",
   "CREATED_BY": 1
+}
+```
+
+If a client accidentally sends a one-item array, the backend unwraps the first
+object before calling the stored procedure.
+
+## Request Flow: View Master Survey Type
+
+Endpoint:
+
+`GET /api/master/api-get-view-master-survey-type`
+
+Stored procedure:
+
+`USP_GET_ALL_MASTER_DATA('VIEW_SURVEY_TYPE', P_ITEM, P_RECORD_SYS_ID, P_ORGANIZATION_SYS_ID, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Master API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Master Data Stored Procedure
+
+  UI->>API: GET survey type list with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Use ITEM query value or default VIEW_ALL
+  API->>API: Use RECORD_SYS_ID and ORGANIZATION_SYS_ID query values or default 0
+  API->>DB: CALL USP_GET_ALL_MASTER_DATA
+  DB->>SP: Fetch survey type master data
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Survey type list JSON
+```
+
+Default query behavior:
+
+```text
+GET /api/master/api-get-view-master-survey-type
+```
+
+is treated as:
+
+```text
+GET /api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+```
+
+## Request Flow: Add or Update Master Survey Type
+
+Endpoint:
+
+`POST /api/master/api-post-add-update-master-survey-type`
+
+Stored procedure:
+
+`USP_POST_ALL_MASTER_DATA('ADD_UPDATE_SURVEY_TYPE', P_JSON, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Master API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Master Data Stored Procedure
+
+  UI->>API: POST survey type payload with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Validate ITEM and required ADD fields
+  API->>DB: CALL USP_POST_ALL_MASTER_DATA
+  DB->>SP: Add/update survey type logic
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Procedure response JSON
+```
+
+### Survey Type Payload Shape
+
+The API accepts the object shape provided by the database developer:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "SURVEY_TYPE": "Seminer",
+  "CREATED_BY": "1"
+}
+```
+
+If a client accidentally sends a one-item array, the backend unwraps the first
+object before calling the stored procedure.
+
+## Request Flow: View Master Property Type
+
+Endpoint:
+
+`GET /api/master/api-get-view-master-property-type`
+
+Stored procedure:
+
+`USP_GET_ALL_MASTER_DATA('VIEW_PROPERTY_TYPE', P_ITEM, P_RECORD_SYS_ID, P_ORGANIZATION_SYS_ID, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Master API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Master Data Stored Procedure
+
+  UI->>API: GET property type list with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Use ITEM query value or default VIEW_ALL
+  API->>API: Use RECORD_SYS_ID and ORGANIZATION_SYS_ID query values or default 0
+  API->>DB: CALL USP_GET_ALL_MASTER_DATA
+  DB->>SP: Fetch property type master data
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Property type list JSON
+```
+
+Default query behavior:
+
+```text
+GET /api/master/api-get-view-master-property-type
+```
+
+is treated as:
+
+```text
+GET /api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+```
+
+## Request Flow: Add or Update Master Property Type
+
+Endpoint:
+
+`POST /api/master/api-post-add-update-master-property-type`
+
+Stored procedure:
+
+`USP_POST_ALL_MASTER_DATA('ADD_UPDATE_PROPERTY_TYPE', P_JSON, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Master API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Master Data Stored Procedure
+
+  UI->>API: POST property type payload with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Validate ITEM and required ADD fields
+  API->>DB: CALL USP_POST_ALL_MASTER_DATA
+  DB->>SP: Add/update property type logic
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Procedure response JSON
+```
+
+### Property Type Payload Shape
+
+The API accepts the object shape provided by the database developer:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "PROPERTY_TYPE": "Seminer",
+  "CREATED_BY": "1"
 }
 ```
 
@@ -629,6 +806,12 @@ object before calling the stored procedure.
 | View system roles | `GET /api/master/api-get-view-master-system-roles` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, system role list response |
 | Add system role | `POST /api/master/api-post-add-update-master-system-role` | Valid system role payload, valid token | HTTP 200, DB response, system role records may be created |
 | Missing system role fields | `POST /api/master/api-post-add-update-master-system-role` | Missing required ADD field, valid token | HTTP 400 with validation response |
+| View survey types | `GET /api/master/api-get-view-master-survey-type` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, survey type list response |
+| Add survey type | `POST /api/master/api-post-add-update-master-survey-type` | Valid survey type payload, valid token | HTTP 200, DB response, survey type records may be created |
+| Missing survey type fields | `POST /api/master/api-post-add-update-master-survey-type` | Missing required ADD field, valid token | HTTP 400 with validation response |
+| View property types | `GET /api/master/api-get-view-master-property-type` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, property type list response |
+| Add property type | `POST /api/master/api-post-add-update-master-property-type` | Valid property type payload, valid token | HTTP 200, DB response, property type records may be created |
+| Missing property type fields | `POST /api/master/api-post-add-update-master-property-type` | Missing required ADD field, valid token | HTTP 400 with validation response |
 | Health check | `GET /health` | No body | HTTP 200, API status JSON |
 | DB unavailable | Any DB-backed API | RDS/network issue | HTTP 500 with error message |
 
@@ -644,6 +827,8 @@ Backend owns:
 - User list and add/update payload handling
 - Specific customer id validation
 - Customer payload validation before DB call
+- Project payload validation before DB call
+- Master system-role, survey-type, and property-type payload validation before DB call
 
 Database owns:
 
@@ -655,6 +840,8 @@ Database owns:
 - Role and organization references
 - Project insert/update rules
 - System role insert/update rules
+- Survey type insert/update rules
+- Property type insert/update rules
 - Stored procedure response messages
 
 Frontend owns:
@@ -665,6 +852,8 @@ Frontend owns:
 - Add/update customer form validation
 - Add/update project form validation
 - Add/update system role form validation
+- Add/update survey type form validation
+- Add/update property type form validation
 - Displaying backend and DB response messages
 
 ## Inactive Legacy Code
@@ -673,7 +862,6 @@ The following files are still present for reference but are not mounted in the
 City Survey app entrypoint:
 
 - `routes/event.js`
-- `routes/master.js`
 - `routes/attendeesportal.js`
 - `routes/payment.js`
 - `routes/fileuploaddownload.js`

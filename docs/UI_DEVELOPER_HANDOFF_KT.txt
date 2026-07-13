@@ -54,6 +54,10 @@ http://localhost:3104
 | Add/update project | POST | `/api/project/api-post-add-update-project` | Yes |
 | View system roles | GET | `/api/master/api-get-view-master-system-roles` | Yes |
 | Add/update system role | POST | `/api/master/api-post-add-update-master-system-role` | Yes |
+| View survey types | GET | `/api/master/api-get-view-master-survey-type` | Yes |
+| Add/update survey type | POST | `/api/master/api-post-add-update-master-survey-type` | Yes |
+| View property types | GET | `/api/master/api-get-view-master-property-type` | Yes |
+| Add/update property type | POST | `/api/master/api-post-add-update-master-property-type` | Yes |
 
 ## Health Check Integration
 
@@ -442,12 +446,12 @@ Running the full sample creates or updates project records in the dev database.
 ### Request
 
 ```http
-GET /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL
+GET /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 Authorization: Bearer <Token>
 ```
 
 `ITEM` is optional. If it is omitted, the backend sends `VIEW_ALL` to the stored
-procedure. `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` are optional filters.
+procedure. `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` default to `0`.
 
 ### Expected Response Shape
 
@@ -479,7 +483,6 @@ Body:
 {
   "ITEM": "ADD",
   "RECORD_SYS_ID": "0",
-  "ORGANIZATION_SYS_ID": "1",
   "SYSTEM_ROLE": "Business Admin",
   "ROLE_DESC": "Business Admin",
   "USER_TYPE": "Internal",
@@ -493,13 +496,132 @@ Body:
 | --- | --- | --- | --- |
 | Action | `ITEM` | Yes | Use `ADD` for create. Confirm update value with backend/DB team. |
 | Role record id | `RECORD_SYS_ID` | Yes | Use `"0"` for add. Existing role id for update. |
-| Organization | `ORGANIZATION_SYS_ID` | Yes | Use selected organization id. |
 | System role | `SYSTEM_ROLE` | Yes | Required, trim whitespace. |
 | Role description | `ROLE_DESC` | Yes | Required, allow same value as role name if no separate description. |
 | User type | `USER_TYPE` | Yes | Controlled value, for example `Internal`. |
 | Created by | `CREATED_BY` | Yes | Use logged-in user's `USER_SYS_ID` when available. |
 
 Running the full sample creates or updates system role records in the dev
+database.
+
+## View Survey Type Integration
+
+### Request
+
+```http
+GET /api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+Authorization: Bearer <Token>
+```
+
+`ITEM` is optional. If it is omitted, the backend sends `VIEW_ALL` to the stored
+procedure. `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` default to `0`.
+
+### Expected Response Shape
+
+The response comes from `USP_GET_ALL_MASTER_DATA`. UI should use the `response`
+field when `status` is `true`.
+
+```json
+{
+  "status": "true",
+  "response": []
+}
+```
+
+Use this API to populate survey-type dropdowns and survey-type management
+screens.
+
+## Add/Update Survey Type Integration
+
+### Request
+
+```http
+POST /api/master/api-post-add-update-master-survey-type
+Content-Type: application/json
+Authorization: Bearer <Token>
+```
+
+Body:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "SURVEY_TYPE": "Seminer",
+  "CREATED_BY": "1"
+}
+```
+
+### Survey Type Field Mapping
+
+| UI Field | Payload Key | Required for Add | Suggested UI Validation |
+| --- | --- | --- | --- |
+| Action | `ITEM` | Yes | Use `ADD` for create. Confirm update value with backend/DB team. |
+| Survey type record id | `RECORD_SYS_ID` | Yes | Use `"0"` for add. Existing survey type id for update. |
+| Survey type | `SURVEY_TYPE` | Yes | Required, trim whitespace. |
+| Created by | `CREATED_BY` | Yes | Use logged-in user's `USER_SYS_ID` when available. |
+
+Running the full sample creates or updates survey type records in the dev
+database.
+
+## View Property Type Integration
+
+### Request
+
+```http
+GET /api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+Authorization: Bearer <Token>
+```
+
+`ITEM` is optional. If it is omitted, the backend sends `VIEW_ALL` to the stored
+procedure. `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` default to `0`.
+
+### Expected Response Shape
+
+The response comes from `USP_GET_ALL_MASTER_DATA`. UI should use the `response`
+field when `status` is `true`.
+
+```json
+{
+  "status": "true",
+  "response": []
+}
+```
+
+Use this API to populate property-type dropdowns and property-type management
+screens.
+
+## Add/Update Property Type Integration
+
+### Request
+
+```http
+POST /api/master/api-post-add-update-master-property-type
+Content-Type: application/json
+Authorization: Bearer <Token>
+```
+
+Body:
+
+```json
+{
+  "ITEM": "ADD",
+  "RECORD_SYS_ID": "0",
+  "PROPERTY_TYPE": "Seminer",
+  "CREATED_BY": "1"
+}
+```
+
+### Property Type Field Mapping
+
+| UI Field | Payload Key | Required for Add | Suggested UI Validation |
+| --- | --- | --- | --- |
+| Action | `ITEM` | Yes | Use `ADD` for create. Confirm update value with backend/DB team. |
+| Property type record id | `RECORD_SYS_ID` | Yes | Use `"0"` for add. Existing property type id for update. |
+| Property type | `PROPERTY_TYPE` | Yes | Required, trim whitespace. |
+| Created by | `CREATED_BY` | Yes | Use logged-in user's `USER_SYS_ID` when available. |
+
+Running the full sample creates or updates property type records in the dev
 database.
 
 ## JavaScript Fetch Example
@@ -673,8 +795,14 @@ export async function addProject(token, payload) {
   return data;
 }
 
-export async function getSystemRoles(token, item = 'VIEW_ALL') {
-  const response = await fetch(`${baseUrl}/api/master/api-get-view-master-system-roles?ITEM=${encodeURIComponent(item)}`, {
+export async function getSystemRoles(token, item = 'VIEW_ALL', recordSysId = 0, organizationSysId = 0) {
+  const query = new URLSearchParams({
+    ITEM: item,
+    RECORD_SYS_ID: String(recordSysId),
+    ORGANIZATION_SYS_ID: String(organizationSysId),
+  });
+
+  const response = await fetch(`${baseUrl}/api/master/api-get-view-master-system-roles?${query.toString()}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -704,6 +832,90 @@ export async function addSystemRole(token, payload) {
 
   if (!response.ok) {
     throw new Error(data.response || data.error || 'System role save failed');
+  }
+
+  return data;
+}
+
+export async function getSurveyTypes(token, item = 'VIEW_ALL', recordSysId = 0, organizationSysId = 0) {
+  const query = new URLSearchParams({
+    ITEM: item,
+    RECORD_SYS_ID: String(recordSysId),
+    ORGANIZATION_SYS_ID: String(organizationSysId),
+  });
+
+  const response = await fetch(`${baseUrl}/api/master/api-get-view-master-survey-type?${query.toString()}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Survey type list failed');
+  }
+
+  return data;
+}
+
+export async function addSurveyType(token, payload) {
+  const response = await fetch(`${baseUrl}/api/master/api-post-add-update-master-survey-type`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Survey type save failed');
+  }
+
+  return data;
+}
+
+export async function getPropertyTypes(token, item = 'VIEW_ALL', recordSysId = 0, organizationSysId = 0) {
+  const query = new URLSearchParams({
+    ITEM: item,
+    RECORD_SYS_ID: String(recordSysId),
+    ORGANIZATION_SYS_ID: String(organizationSysId),
+  });
+
+  const response = await fetch(`${baseUrl}/api/master/api-get-view-master-property-type?${query.toString()}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Property type list failed');
+  }
+
+  return data;
+}
+
+export async function addPropertyType(token, payload) {
+  const response = await fetch(`${baseUrl}/api/master/api-post-add-update-master-property-type`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Property type save failed');
   }
 
   return data;
@@ -779,9 +991,9 @@ export async function addProject(token, payload) {
   return data;
 }
 
-export async function getSystemRoles(token, item = 'VIEW_ALL') {
+export async function getSystemRoles(token, item = 'VIEW_ALL', recordSysId = 0, organizationSysId = 0) {
   const { data } = await api.get('/api/master/api-get-view-master-system-roles', {
-    params: { ITEM: item },
+    params: { ITEM: item, RECORD_SYS_ID: recordSysId, ORGANIZATION_SYS_ID: organizationSysId },
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -792,6 +1004,48 @@ export async function getSystemRoles(token, item = 'VIEW_ALL') {
 
 export async function addSystemRole(token, payload) {
   const { data } = await api.post('/api/master/api-post-add-update-master-system-role', payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function getSurveyTypes(token, item = 'VIEW_ALL', recordSysId = 0, organizationSysId = 0) {
+  const { data } = await api.get('/api/master/api-get-view-master-survey-type', {
+    params: { ITEM: item, RECORD_SYS_ID: recordSysId, ORGANIZATION_SYS_ID: organizationSysId },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function addSurveyType(token, payload) {
+  const { data } = await api.post('/api/master/api-post-add-update-master-survey-type', payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function getPropertyTypes(token, item = 'VIEW_ALL', recordSysId = 0, organizationSysId = 0) {
+  const { data } = await api.get('/api/master/api-get-view-master-property-type', {
+    params: { ITEM: item, RECORD_SYS_ID: recordSysId, ORGANIZATION_SYS_ID: organizationSysId },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
+export async function addPropertyType(token, payload) {
+  const { data } = await api.post('/api/master/api-post-add-update-master-property-type', payload, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -882,7 +1136,6 @@ Behavior:
 
 Fields:
 
-- Organization
 - System role
 - Role description
 - User type
@@ -895,6 +1148,36 @@ Behavior:
 - Show success or failure message from `response`.
 - During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team
   approves creating system role records in the dev database.
+
+### Survey Type Management Page
+
+Fields:
+
+- Survey type
+
+Behavior:
+
+- Require login token.
+- Load existing survey types with the survey-type list API.
+- Send payload to survey type add/update API.
+- Show success or failure message from `response`.
+- During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team
+  approves creating survey type records in the dev database.
+
+### Property Type Management Page
+
+Fields:
+
+- Property type
+
+Behavior:
+
+- Require login token.
+- Load existing property types with the property-type list API.
+- Send payload to property type add/update API.
+- Show success or failure message from `response`.
+- During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team
+  approves creating property type records in the dev database.
 
 ## Frontend Demo Flow
 
@@ -913,6 +1196,10 @@ Behavior:
 11. Submit validation-only sample or approved full project sample.
 12. Open system role form.
 13. Submit validation-only sample or approved full system role sample.
+14. Open survey type form.
+15. Submit validation-only sample or approved full survey type sample.
+16. Open property type form.
+17. Submit validation-only sample or approved full property type sample.
 
 ## Open Questions for UI Team
 
@@ -923,8 +1210,10 @@ Behavior:
 - What is the final update-user contract?
 - What is the final update/delete customer contract?
 - What is the final update/delete project contract?
-- What APIs will provide surveyor, survey type, and property type dropdowns?
+- What APIs will provide surveyor dropdown values?
 - What is the final update/delete system role contract?
+- What is the final update/delete survey type contract?
+- What is the final update/delete property type contract?
 - Should the UI support logout and token expiry messaging in this phase?
 
 ## Do Not Do
@@ -935,4 +1224,6 @@ Behavior:
 - Do not create customer/PIC records during demos unless approved.
 - Do not create project records during demos unless approved.
 - Do not create system role records during demos unless approved.
+- Do not create survey type records during demos unless approved.
+- Do not create property type records during demos unless approved.
 - Do not assume old event or attendee APIs are active for City Survey.

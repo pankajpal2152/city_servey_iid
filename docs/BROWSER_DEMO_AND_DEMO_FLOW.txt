@@ -17,6 +17,10 @@ RDS database and that the active APIs work end to end:
 - Add/update project with JWT protection
 - View system roles with JWT protection
 - Add/update system role with JWT protection
+- View survey types with JWT protection
+- Add/update survey type with JWT protection
+- View property types with JWT protection
+- Add/update property type with JWT protection
 - Health check without JWT
 
 ## Pre-Demo Checklist
@@ -93,6 +97,10 @@ Expected:
   - `POST /api/project/api-post-add-update-project`
   - `GET /api/master/api-get-view-master-system-roles`
   - `POST /api/master/api-post-add-update-master-system-role`
+  - `GET /api/master/api-get-view-master-survey-type`
+  - `POST /api/master/api-post-add-update-master-survey-type`
+  - `GET /api/master/api-get-view-master-property-type`
+  - `POST /api/master/api-post-add-update-master-property-type`
 
 ### Step 2: Show Health Check
 
@@ -409,8 +417,8 @@ Click:
 
 `Try it out`
 
-Keep `ITEM` as `VIEW_ALL` or leave it empty. Leave `RECORD_SYS_ID` and
-`ORGANIZATION_SYS_ID` empty unless testing a specific filter.
+Keep `ITEM` as `VIEW_ALL`. Use `0` for `RECORD_SYS_ID` and
+`ORGANIZATION_SYS_ID` unless testing a specific filter.
 
 Click:
 
@@ -455,13 +463,125 @@ Expected safe demo result:
 This proves Swagger and JWT reach the system-role master route without creating
 a system-role record.
 
-Only execute the full database developer sample if the team approves creating
-real dev DB system-role records.
+### Step 15: Test Protected Survey Type List API
+
+Open:
+
+`GET /api/master/api-get-view-master-survey-type`
+
+Click:
+
+`Try it out`
+
+Keep `ITEM` as `VIEW_ALL`. Use `0` for `RECORD_SYS_ID` and
+`ORGANIZATION_SYS_ID` unless testing a specific filter.
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status: true`
+- Response contains survey type rows when data exists
+
+### Step 16: Test Protected Survey Type API Routing Safely
+
+Open:
+
+`POST /api/master/api-post-add-update-master-survey-type`
+
+Click:
+
+`Try it out`
+
+Use a validation-only body:
+
+```json
+{
+  "ITEM": "ADD"
+}
+```
+
+Expected safe demo result:
+
+- HTTP 400
+- Response such as:
+
+```json
+{
+  "status": "false",
+  "response": "RECORD_SYS_ID is required"
+}
+```
+
+This proves Swagger and JWT reach the survey-type master route without creating
+a survey-type record.
+
+### Step 17: Test Protected Property Type List API
+
+Open:
+
+`GET /api/master/api-get-view-master-property-type`
+
+Click:
+
+`Try it out`
+
+Keep `ITEM` as `VIEW_ALL`. Use `0` for `RECORD_SYS_ID` and
+`ORGANIZATION_SYS_ID` unless testing a specific filter.
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status: true`
+- Response contains property type rows when data exists
+
+### Step 18: Test Protected Property Type API Routing Safely
+
+Open:
+
+`POST /api/master/api-post-add-update-master-property-type`
+
+Click:
+
+`Try it out`
+
+Use a validation-only body:
+
+```json
+{
+  "ITEM": "ADD"
+}
+```
+
+Expected safe demo result:
+
+- HTTP 400
+- Response such as:
+
+```json
+{
+  "status": "false",
+  "response": "RECORD_SYS_ID is required"
+}
+```
+
+This proves Swagger and JWT reach the property-type master route without
+creating a property-type record.
+
+Only execute full database developer samples if the team approves creating real
+dev DB system-role, survey-type, or property-type records.
 
 ## Full Demo Storyline for Senior Developer
 
 1. "The app starts from `index.js`, where City Survey auth, user, customer,
-   project, master system role, and health routes are mounted."
+   project, master data, and health routes are mounted."
 2. "Database connection comes from `.env` through `config/db.js`; no hardcoded
    DB credentials are needed in source."
 3. "Swagger is limited to the active City Survey APIs, so old event/payment APIs
@@ -618,7 +738,7 @@ console.log(projectValidationResponse.status, await projectValidationResponse.js
 To view the system-role list:
 
 ```javascript
-const systemRoleListResponse = await fetch(`${baseUrl}/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL`, {
+const systemRoleListResponse = await fetch(`${baseUrl}/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`, {
   method: 'GET',
   headers: {
     Authorization: `Bearer ${authJson.Token}`,
@@ -626,6 +746,32 @@ const systemRoleListResponse = await fetch(`${baseUrl}/api/master/api-get-view-m
 });
 
 console.log(systemRoleListResponse.status, await systemRoleListResponse.json());
+```
+
+To view the survey type list:
+
+```javascript
+const surveyTypeListResponse = await fetch(`${baseUrl}/api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+});
+
+console.log(surveyTypeListResponse.status, await surveyTypeListResponse.json());
+```
+
+To view the property type list:
+
+```javascript
+const propertyTypeListResponse = await fetch(`${baseUrl}/api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+});
+
+console.log(propertyTypeListResponse.status, await propertyTypeListResponse.json());
 ```
 
 To validate the system-role add/update route without writing data:
@@ -643,6 +789,36 @@ const systemRoleValidationResponse = await fetch(`${baseUrl}/api/master/api-post
 console.log(systemRoleValidationResponse.status, await systemRoleValidationResponse.json());
 ```
 
+To validate the survey-type add/update route without writing data:
+
+```javascript
+const surveyTypeValidationResponse = await fetch(`${baseUrl}/api/master/api-post-add-update-master-survey-type`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+  body: JSON.stringify({ ITEM: 'ADD' }),
+});
+
+console.log(surveyTypeValidationResponse.status, await surveyTypeValidationResponse.json());
+```
+
+To validate the property-type add/update route without writing data:
+
+```javascript
+const propertyTypeValidationResponse = await fetch(`${baseUrl}/api/master/api-post-add-update-master-property-type`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+  body: JSON.stringify({ ITEM: 'ADD' }),
+});
+
+console.log(propertyTypeValidationResponse.status, await propertyTypeValidationResponse.json());
+```
+
 ## Demo Do Not Do List
 
 - Do not use a new random email in the add user demo unless the team wants a
@@ -653,6 +829,10 @@ console.log(systemRoleValidationResponse.status, await systemRoleValidationRespo
   records to be created.
 - Do not execute the full system-role sample unless the team wants real dev
   system-role records to be created.
+- Do not execute the full survey-type sample unless the team wants real dev
+  survey-type records to be created.
+- Do not execute the full property-type sample unless the team wants real dev
+  property-type records to be created.
 - Do not paste database passwords into screen-shared notes.
 - Do not re-enable old routes in `index.js` for this demo.
 - Do not use production database credentials for local demo.
