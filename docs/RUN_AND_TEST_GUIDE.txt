@@ -156,14 +156,14 @@ Confirm these tags and endpoints are visible:
 - `Master`: `GET /api/master/api-get-view-master-property-type`
 - `Master`: `POST /api/master/api-post-add-update-master-property-type`
 
-Run the browser demo steps from [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.txt).
+Run the browser demo steps from [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.md).
 
 Dev server Swagger:
 
 `https://api-dev.citysurveyors.com.sg/api/api-docs/`
 
-UI developers can use [API_ENDPOINTS_DEV_SERVER.txt](./API_ENDPOINTS_DEV_SERVER.txt)
-or [API_URLS.txt](./API_URLS.txt) for copy-paste API URLs.
+UI developers can use [API_ENDPOINTS_DEV_SERVER.md](./API_ENDPOINTS_DEV_SERVER.md)
+or [API_URLS.md](./API_URLS.md) for copy-paste API URLs.
 
 ## 7. PowerShell API Smoke Test
 

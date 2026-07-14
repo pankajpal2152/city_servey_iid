@@ -83,12 +83,13 @@ Header: Authorization: Bearer <Token>
 Body:
 {
   "ITEM": "ADD",
-  "CUSTOMER_SYS_ID": 4,
-  "PIC_SYS_ID": 5,
-  "SITE_ADDRESS": "Mumbai",
+  "CUSTOMER_SYS_ID": 17,
+  "PIC_SYS_ID": 22,
+  "SITE_ADDRESS": "51 Jalan Kukoh 01-37, 1620051, Singapore",
+  "ASSIGNED_SURVEYOR_SYS_ID": 1,
   "ASSIGNED_SURVEYOR": "Marcus Koh",
-  "TYPE_OF_SURVEY": "MRT Pier",
-  "TYPE_OF_PROPERTY": "Own",
+  "SURVEY_TYPE_SYS_ID": 5,
+  "PROPERTY_TYPE_SYS_ID": 15,
   "CREATED_BY": 1
 }
 
@@ -182,4 +183,4 @@ NOTES
   DB records.
 - The full master property type payload is a write operation and may create dev
   DB records.
-- Full request/response examples are available in docs/API_URLS.txt.
+- Full request/response examples are available in docs/API_URLS.md.

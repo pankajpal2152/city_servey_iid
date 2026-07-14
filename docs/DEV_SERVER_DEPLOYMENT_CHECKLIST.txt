@@ -155,7 +155,7 @@ Verify:
 - Procedure `USP_POST_ALL_MASTER_DATA` exists
 - Sample auth call returns `status: true`
 
-Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.txt).
+Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.md).
 
 ## 8. API Verification Checklist
 

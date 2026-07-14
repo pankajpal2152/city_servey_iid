@@ -24,7 +24,7 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 Quick endpoint sheet:
 
 ```text
-docs/API_ENDPOINTS_DEV_SERVER.txt
+docs/API_ENDPOINTS_DEV_SERVER.md
 ```
 
 Local default:
@@ -415,12 +415,13 @@ Body:
 ```json
 {
   "ITEM": "ADD",
-  "CUSTOMER_SYS_ID": 4,
-  "PIC_SYS_ID": 5,
-  "SITE_ADDRESS": "Mumbai",
+  "CUSTOMER_SYS_ID": 17,
+  "PIC_SYS_ID": 22,
+  "SITE_ADDRESS": "51 Jalan Kukoh 01-37, 1620051, Singapore",
+  "ASSIGNED_SURVEYOR_SYS_ID": 1,
   "ASSIGNED_SURVEYOR": "Marcus Koh",
-  "TYPE_OF_SURVEY": "MRT Pier",
-  "TYPE_OF_PROPERTY": "Own",
+  "SURVEY_TYPE_SYS_ID": 5,
+  "PROPERTY_TYPE_SYS_ID": 15,
   "CREATED_BY": 1
 }
 ```
@@ -433,9 +434,10 @@ Body:
 | Customer | `CUSTOMER_SYS_ID` | Yes | Use selected customer id from customer list. |
 | PIC/contact person | `PIC_SYS_ID` | Yes | Use selected PIC id from the selected customer. |
 | Site address | `SITE_ADDRESS` | Yes | Required, allow multiline if UI needs. |
-| Assigned surveyor | `ASSIGNED_SURVEYOR` | Yes | Text/dropdown as per product rule. |
-| Type of survey | `TYPE_OF_SURVEY` | Yes | Dropdown or controlled text. |
-| Type of property | `TYPE_OF_PROPERTY` | Yes | Dropdown or controlled text. |
+| Assigned surveyor id | `ASSIGNED_SURVEYOR_SYS_ID` | Yes | Use selected surveyor id. |
+| Assigned surveyor name | `ASSIGNED_SURVEYOR` | Yes | Send selected surveyor display name. |
+| Survey type | `SURVEY_TYPE_SYS_ID` | Yes | Use selected survey type id from master survey type API. |
+| Property type | `PROPERTY_TYPE_SYS_ID` | Yes | Use selected property type id from master property type API. |
 | Created by | `CREATED_BY` | Yes | Use logged-in user's `USER_SYS_ID` when available. |
 
 The project API accepts the object shape provided by the database developer.
@@ -1126,6 +1128,8 @@ Behavior:
 
 - Require login token.
 - Load customers first so the user can choose `CUSTOMER_SYS_ID` and `PIC_SYS_ID`.
+- Load survey type options from the master survey type API.
+- Load property type options from the master property type API.
 - Load existing projects with the project list API.
 - Send payload to project add/update API.
 - Show success or failure message from `response`.

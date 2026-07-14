@@ -23,9 +23,10 @@ function validateProjectPayload(payload) {
       'CUSTOMER_SYS_ID',
       'PIC_SYS_ID',
       'SITE_ADDRESS',
+      'ASSIGNED_SURVEYOR_SYS_ID',
       'ASSIGNED_SURVEYOR',
-      'TYPE_OF_SURVEY',
-      'TYPE_OF_PROPERTY',
+      'SURVEY_TYPE_SYS_ID',
+      'PROPERTY_TYPE_SYS_ID',
       'CREATED_BY',
     ];
     const missingField = requiredFields.find((field) => {
@@ -118,9 +119,10 @@ router.get('/api-get-view-list-project-details', auth, async (req, res) => {
  *               - CUSTOMER_SYS_ID
  *               - PIC_SYS_ID
  *               - SITE_ADDRESS
+ *               - ASSIGNED_SURVEYOR_SYS_ID
  *               - ASSIGNED_SURVEYOR
- *               - TYPE_OF_SURVEY
- *               - TYPE_OF_PROPERTY
+ *               - SURVEY_TYPE_SYS_ID
+ *               - PROPERTY_TYPE_SYS_ID
  *               - CREATED_BY
  *             properties:
  *               ITEM:
@@ -128,22 +130,25 @@ router.get('/api-get-view-list-project-details', auth, async (req, res) => {
  *                 example: ADD
  *               CUSTOMER_SYS_ID:
  *                 type: integer
- *                 example: 4
+ *                 example: 17
  *               PIC_SYS_ID:
  *                 type: integer
- *                 example: 5
+ *                 example: 22
  *               SITE_ADDRESS:
  *                 type: string
- *                 example: Mumbai
+ *                 example: 51 Jalan Kukoh 01-37, 1620051, Singapore
+ *               ASSIGNED_SURVEYOR_SYS_ID:
+ *                 type: integer
+ *                 example: 1
  *               ASSIGNED_SURVEYOR:
  *                 type: string
  *                 example: Marcus Koh
- *               TYPE_OF_SURVEY:
- *                 type: string
- *                 example: MRT Pier
- *               TYPE_OF_PROPERTY:
- *                 type: string
- *                 example: Own
+ *               SURVEY_TYPE_SYS_ID:
+ *                 type: integer
+ *                 example: 5
+ *               PROPERTY_TYPE_SYS_ID:
+ *                 type: integer
+ *                 example: 15
  *               CREATED_BY:
  *                 type: integer
  *                 example: 1

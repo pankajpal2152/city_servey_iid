@@ -1,6 +1,6 @@
 # Work Report and Backend Handoff KT
 
-Date: 2026-07-09
+Date: 2026-07-13
 
 ## Work Completed Today
 
@@ -111,7 +111,7 @@ Documentation files:
 - `docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.md`
 - `docs/RUN_AND_TEST_GUIDE.md`
 - `docs/API_URLS.md`
-- `docs/API_ENDPOINTS_DEV_SERVER.txt`
+- `docs/API_ENDPOINTS_DEV_SERVER.md`
 - `docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-08.md`
 - `docs/UI_DEVELOPER_HANDOFF_KT.md`
 
@@ -508,12 +508,13 @@ Request:
 ```json
 {
   "ITEM": "ADD",
-  "CUSTOMER_SYS_ID": 4,
-  "PIC_SYS_ID": 5,
-  "SITE_ADDRESS": "Mumbai",
+  "CUSTOMER_SYS_ID": 17,
+  "PIC_SYS_ID": 22,
+  "SITE_ADDRESS": "51 Jalan Kukoh 01-37, 1620051, Singapore",
+  "ASSIGNED_SURVEYOR_SYS_ID": 1,
   "ASSIGNED_SURVEYOR": "Marcus Koh",
-  "TYPE_OF_SURVEY": "MRT Pier",
-  "TYPE_OF_PROPERTY": "Own",
+  "SURVEY_TYPE_SYS_ID": 5,
+  "PROPERTY_TYPE_SYS_ID": 15,
   "CREATED_BY": 1
 }
 ```

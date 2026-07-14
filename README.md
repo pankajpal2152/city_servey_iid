@@ -249,7 +249,7 @@ Requires `Authorization: Bearer <token>`.
 Calls:
 
 ```sql
-CALL USP_POST_PROJECT_ACTIVITY('ADD_UPDATE_PROJECT', '{"ITEM":"ADD","CUSTOMER_SYS_ID":4,"PIC_SYS_ID":5,"SITE_ADDRESS":"Mumbai","ASSIGNED_SURVEYOR":"Marcus Koh","TYPE_OF_SURVEY":"MRT Pier","TYPE_OF_PROPERTY":"Own","CREATED_BY":1}', @ERRNO, @ERRMSG);
+CALL USP_POST_PROJECT_ACTIVITY('ADD_UPDATE_PROJECT', '{"ITEM":"ADD","CUSTOMER_SYS_ID":17,"PIC_SYS_ID":22,"SITE_ADDRESS":"51 Jalan Kukoh 01-37, 1620051, Singapore","ASSIGNED_SURVEYOR_SYS_ID":1,"ASSIGNED_SURVEYOR":"Marcus Koh","SURVEY_TYPE_SYS_ID":5,"PROPERTY_TYPE_SYS_ID":15,"CREATED_BY":1}', @ERRNO, @ERRMSG);
 ```
 
 Running the full sample with a valid token may create project records in the
@@ -447,12 +447,12 @@ it to the Dev server.
 
 Detailed backend and UI handoff documentation is available in `docs/`:
 
-- [API URL Reference](./docs/API_URLS.txt)
-- [UI Developer Dev Server API Endpoint Sheet](./docs/API_ENDPOINTS_DEV_SERVER.txt)
-- [Documentation Index](./docs/INDEX.txt)
-- [Module Architecture and Scenario Flow](./docs/MODULE_ARCHITECTURE_FLOW.txt)
-- [Browser Demo and Demo Flow](./docs/BROWSER_DEMO_AND_DEMO_FLOW.txt)
-- [Dev Server Deployment Checklist](./docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.txt)
-- [Run and Test Guide](./docs/RUN_AND_TEST_GUIDE.txt)
-- [Work Report and Backend Handoff KT](./docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-08.txt)
-- [UI Developer Handoff KT](./docs/UI_DEVELOPER_HANDOFF_KT.txt)
+- [API URL Reference](./docs/API_URLS.md)
+- [UI Developer Dev Server API Endpoint Sheet](./docs/API_ENDPOINTS_DEV_SERVER.md)
+- [Documentation Index](./docs/INDEX.md)
+- [Module Architecture and Scenario Flow](./docs/MODULE_ARCHITECTURE_FLOW.md)
+- [Browser Demo and Demo Flow](./docs/BROWSER_DEMO_AND_DEMO_FLOW.md)
+- [Dev Server Deployment Checklist](./docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.md)
+- [Run and Test Guide](./docs/RUN_AND_TEST_GUIDE.md)
+- [Work Report and Backend Handoff KT](./docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-08.md)
+- [UI Developer Handoff KT](./docs/UI_DEVELOPER_HANDOFF_KT.md)
