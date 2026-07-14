@@ -1,6 +1,6 @@
 # Dev Server Deployment Checklist
 
-Date: 2026-07-09
+Date: 2026-07-14
 
 ## Purpose
 
@@ -155,7 +155,7 @@ Verify:
 - Procedure `USP_POST_ALL_MASTER_DATA` exists
 - Sample auth call returns `status: true`
 
-Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.md).
+Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.txt).
 
 ## 8. API Verification Checklist
 
@@ -243,7 +243,7 @@ If deployment fails:
 
 ## 12. Known Dev Notes
 
-- During local testing on 2026-07-08, port `3000` was already occupied by a
+- During local testing on 2026-07-14, port `3000` was already occupied by a
   separate `node` process. The local City Survey `.env` now uses port `3103`.
 - The add/update stored procedure commits internally, so avoid write tests with
   new email addresses, full customer payloads, full project payloads, or full

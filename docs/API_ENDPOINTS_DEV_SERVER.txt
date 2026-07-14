@@ -1,5 +1,5 @@
 CITY SURVEY DEV SERVER API ENDPOINTS
-Date: 2026-07-09
+Date: 2026-07-14
 
 Swagger URL:
 https://api-dev.citysurveyors.com.sg/api/api-docs/
@@ -183,4 +183,4 @@ NOTES
   DB records.
 - The full master property type payload is a write operation and may create dev
   DB records.
-- Full request/response examples are available in docs/API_URLS.md.
+- Full request/response examples are available in docs/API_URLS.txt.

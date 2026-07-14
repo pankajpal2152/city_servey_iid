@@ -1,6 +1,6 @@
 # UI Developer Handoff KT
 
-Date: 2026-07-09
+Date: 2026-07-14
 
 ## Purpose
 
@@ -24,7 +24,7 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 Quick endpoint sheet:
 
 ```text
-docs/API_ENDPOINTS_DEV_SERVER.md
+docs/API_ENDPOINTS_DEV_SERVER.txt
 ```
 
 Local default:
@@ -74,7 +74,7 @@ Expected response:
   "status": "true",
   "response": "City Survey API is running",
   "uptime": 1.23,
-  "timestamp": "2026-07-09T00:00:00.000Z"
+  "timestamp": "2026-07-14T00:00:00.000Z"
 }
 ```
 
