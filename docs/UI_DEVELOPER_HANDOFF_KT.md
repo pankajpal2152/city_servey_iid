@@ -1,6 +1,6 @@
 # UI Developer Handoff KT
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 ## Purpose
 
@@ -24,7 +24,7 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 Quick endpoint sheet:
 
 ```text
-docs/API_ENDPOINTS_DEV_SERVER.txt
+docs/API_ENDPOINTS_DEV_SERVER.md
 ```
 
 Local default:
@@ -58,6 +58,7 @@ http://localhost:3104
 | Add/update survey type | POST | `/api/master/api-post-add-update-master-survey-type` | Yes |
 | View property types | GET | `/api/master/api-get-view-master-property-type` | Yes |
 | Add/update property type | POST | `/api/master/api-post-add-update-master-property-type` | Yes |
+| View master details | GET | `/api/master/api-get-view-master-details` | Yes |
 
 ## Health Check Integration
 
@@ -74,7 +75,7 @@ Expected response:
   "status": "true",
   "response": "City Survey API is running",
   "uptime": 1.23,
-  "timestamp": "2026-07-14T00:00:00.000Z"
+  "timestamp": "2026-07-15T00:00:00.000Z"
 }
 ```
 
@@ -626,6 +627,32 @@ Body:
 Running the full sample creates or updates property type records in the dev
 database.
 
+## View Master Details Integration
+
+### Request
+
+```http
+GET /api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+Authorization: Bearer <Token>
+```
+
+`ITEM` is optional. If it is omitted, the backend sends `VIEW_ALL` to the stored
+procedure. `RECORD_SYS_ID` and `ORGANIZATION_SYS_ID` default to `0`.
+
+### Expected Response Shape
+
+The response comes from `USP_GET_ALL_MASTER_DATA`. UI should use the `response`
+field when `status` is `true`.
+
+```json
+{
+  "status": "true",
+  "response": []
+}
+```
+
+Use this API when the frontend needs the common master-detail/master-name list.
+
 ## JavaScript Fetch Example
 
 ```javascript
@@ -918,6 +945,29 @@ export async function addPropertyType(token, payload) {
 
   if (!response.ok) {
     throw new Error(data.response || data.error || 'Property type save failed');
+  }
+
+  return data;
+}
+
+export async function getMasterDetails(token, item = 'VIEW_ALL', recordSysId = 0, organizationSysId = 0) {
+  const query = new URLSearchParams({
+    ITEM: item,
+    RECORD_SYS_ID: String(recordSysId),
+    ORGANIZATION_SYS_ID: String(organizationSysId),
+  });
+
+  const response = await fetch(`${baseUrl}/api/master/api-get-view-master-details?${query.toString()}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Master details failed');
   }
 
   return data;

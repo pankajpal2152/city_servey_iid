@@ -1,6 +1,6 @@
 # City Survey Dev Server API URLs
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 This file is the UI developer handoff reference for the active City Survey
 backend APIs shown in Swagger.
@@ -74,6 +74,7 @@ response field named `Token`.
 | Master   | POST   | `https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-survey-type`             | Yes           |
 | Master   | GET    | `https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0` | Yes |
 | Master   | POST   | `https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-property-type`           | Yes           |
+| Master   | GET    | `https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0` | Yes |
 
 ## Relative API Paths
 
@@ -96,6 +97,7 @@ GET  /api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&O
 POST /api/master/api-post-add-update-master-survey-type
 GET  /api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 POST /api/master/api-post-add-update-master-property-type
+GET  /api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 ```
 
 ## 1. Health Check
@@ -113,7 +115,7 @@ Success response shape:
   "status": "true",
   "response": "City Survey API is running",
   "uptime": 123.45,
-  "timestamp": "2026-07-14T00:00:00.000Z"
+  "timestamp": "2026-07-15T00:00:00.000Z"
 }
 ```
 
@@ -444,6 +446,28 @@ Request body:
 
 Running this sample with a valid token may create records in the dev database.
 
+## 16. View Master Details
+
+```text
+GET https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+```
+
+Auth required: Yes
+
+Query parameters:
+
+| Name | Required | Default | Example |
+| --- | --- | --- | --- |
+| `ITEM` | No | `VIEW_ALL` | `VIEW_ALL` |
+| `RECORD_SYS_ID` | No | `0` | `0` |
+| `ORGANIZATION_SYS_ID` | No | `0` | `0` |
+
+Frontend usage:
+
+```js
+const url = `${API_BASE_URL}/api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`;
+```
+
 ## Swagger Visibility Checklist
 
 The dev Swagger URL should show these tags:
@@ -472,6 +496,7 @@ The dev Swagger URL should show these API paths:
 - `POST /api/master/api-post-add-update-master-survey-type`
 - `GET /api/master/api-get-view-master-property-type`
 - `POST /api/master/api-post-add-update-master-property-type`
+- `GET /api/master/api-get-view-master-details`
 
 After deployment, verify the Swagger list at:
 

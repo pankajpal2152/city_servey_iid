@@ -2,7 +2,7 @@
 
 Express backend for the City Survey application. The active scope is user
 authentication, user list/add/update, customer list/profile/add/update, project list/add/update,
-master system role list/add/update, master survey type list/add/update, master property type list/add/update, and API health checks
+master system role list/add/update, master survey type list/add/update, master property type list/add/update, master details view, and API health checks
 through Node.js, Express, JWT, Swagger, and MySQL stored procedures.
 
 ## Active APIs
@@ -36,6 +36,7 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 | Master   | POST   | `/api/master/api-post-add-update-master-survey-type`   | Yes  |
 | Master   | GET    | `/api/master/api-get-view-master-property-type`        | Yes  |
 | Master   | POST   | `/api/master/api-post-add-update-master-property-type` | Yes  |
+| Master   | GET    | `/api/master/api-get-view-master-details`             | Yes  |
 
 ## Setup & Running Locally
 
@@ -106,6 +107,7 @@ Swagger must show these City Survey tags and APIs in the browser:
 - `Master`: `POST /api/master/api-post-add-update-master-survey-type`
 - `Master`: `GET /api/master/api-get-view-master-property-type`
 - `Master`: `POST /api/master/api-post-add-update-master-property-type`
+- `Master`: `GET /api/master/api-get-view-master-details`
 
 If Swagger opens but an API is missing, restart `npm run dev` and hard refresh
 the browser with `Ctrl + F5`.
@@ -372,6 +374,30 @@ CALL USP_POST_ALL_MASTER_DATA('ADD_UPDATE_PROPERTY_TYPE', '{"ITEM":"ADD","RECORD
 Running the full sample with a valid token may create property type records in
 the dev database.
 
+### View Master Details
+
+`GET /api/master/api-get-view-master-details`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_ALL_MASTER_DATA('VIEW_MASTER_NAME', 'VIEW_ALL', '0', 0, @ERRNO, @ERRMSG);
+```
+
+Optional query parameters:
+
+```text
+ITEM=VIEW_ALL
+RECORD_SYS_ID=0
+ORGANIZATION_SYS_ID=0
+```
+
+If `ITEM` is not provided, the API defaults to `VIEW_ALL`. If
+`RECORD_SYS_ID` or `ORGANIZATION_SYS_ID` are not provided, the API sends `0`
+to the stored procedure.
+
 ## Git Branching & Deployment Strategy
 
 This project follows a branch-based development and deployment model to ensure
@@ -447,12 +473,12 @@ it to the Dev server.
 
 Detailed backend and UI handoff documentation is available in `docs/`:
 
-- [API URL Reference](./docs/API_URLS.txt)
-- [UI Developer Dev Server API Endpoint Sheet](./docs/API_ENDPOINTS_DEV_SERVER.txt)
-- [Documentation Index](./docs/INDEX.txt)
-- [Module Architecture and Scenario Flow](./docs/MODULE_ARCHITECTURE_FLOW.txt)
-- [Browser Demo and Demo Flow](./docs/BROWSER_DEMO_AND_DEMO_FLOW.txt)
-- [Dev Server Deployment Checklist](./docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.txt)
-- [Run and Test Guide](./docs/RUN_AND_TEST_GUIDE.txt)
-- [Work Report and Backend Handoff KT](./docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-14.txt)
-- [UI Developer Handoff KT](./docs/UI_DEVELOPER_HANDOFF_KT.txt)
+- [API URL Reference](./docs/API_URLS.md)
+- [UI Developer Dev Server API Endpoint Sheet](./docs/API_ENDPOINTS_DEV_SERVER.md)
+- [Documentation Index](./docs/INDEX.md)
+- [Module Architecture and Scenario Flow](./docs/MODULE_ARCHITECTURE_FLOW.md)
+- [Browser Demo and Demo Flow](./docs/BROWSER_DEMO_AND_DEMO_FLOW.md)
+- [Dev Server Deployment Checklist](./docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.md)
+- [Run and Test Guide](./docs/RUN_AND_TEST_GUIDE.md)
+- [Work Report and Backend Handoff KT](./docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-15.md)
+- [UI Developer Handoff KT](./docs/UI_DEVELOPER_HANDOFF_KT.md)

@@ -30,6 +30,7 @@ Active endpoints:
 - `POST /api/master/api-post-add-update-master-survey-type`
 - `GET /api/master/api-get-view-master-property-type`
 - `POST /api/master/api-post-add-update-master-property-type`
+- `GET /api/master/api-get-view-master-details`
 
 Swagger for these active routes is available at `/api/api-docs` on the current
 configured app port. Swagger should show `Health`, `Auth`, `User`, `Customer`,

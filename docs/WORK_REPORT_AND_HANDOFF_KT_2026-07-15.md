@@ -1,6 +1,6 @@
 # Work Report and Backend Handoff KT
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 ## Work Completed Today
 
@@ -53,6 +53,9 @@ Completed items:
 - Implemented active add/update master property type API:
   - `POST /api/master/api-post-add-update-master-property-type`
   - Procedure: `USP_POST_ALL_MASTER_DATA`
+- Implemented active master details API:
+  - `GET /api/master/api-get-view-master-details`
+  - Procedure: `USP_GET_ALL_MASTER_DATA`
 - Merged senior developer health API:
   - `GET /health`
   - Route: `routes/health.js`
@@ -105,15 +108,15 @@ Backend files:
 Documentation files:
 
 - `README.md`
-- `docs/INDEX.txt`
-- `docs/MODULE_ARCHITECTURE_FLOW.txt`
-- `docs/BROWSER_DEMO_AND_DEMO_FLOW.txt`
-- `docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.txt`
-- `docs/RUN_AND_TEST_GUIDE.txt`
-- `docs/API_URLS.txt`
-- `docs/API_ENDPOINTS_DEV_SERVER.txt`
-- `docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-14.txt`
-- `docs/UI_DEVELOPER_HANDOFF_KT.txt`
+- `docs/INDEX.md`
+- `docs/MODULE_ARCHITECTURE_FLOW.md`
+- `docs/BROWSER_DEMO_AND_DEMO_FLOW.md`
+- `docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.md`
+- `docs/RUN_AND_TEST_GUIDE.md`
+- `docs/API_URLS.md`
+- `docs/API_ENDPOINTS_DEV_SERVER.md`
+- `docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-15.md`
+- `docs/UI_DEVELOPER_HANDOFF_KT.md`
 
 ## Verification Done
 
@@ -176,6 +179,8 @@ HTTP API smoke test:
   read-only API.
 - Property type add/update route validation can be tested safely with
   `{ "ITEM": "ADD" }`; full property type samples are write operations.
+- Master details route can be tested safely with `ITEM=VIEW_ALL`; it is a
+  read-only API.
 
 ## Current Working API Contracts
 
@@ -491,6 +496,32 @@ Request:
 }
 ```
 
+### View Master Details
+
+Endpoint:
+
+`GET /api/master/api-get-view-master-details`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_ALL_MASTER_DATA('VIEW_MASTER_NAME', 'VIEW_ALL', '0', 0, @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=VIEW_ALL
+RECORD_SYS_ID=0
+ORGANIZATION_SYS_ID=0
+```
+
 ### Add or Update Project
 
 Endpoint:
@@ -556,7 +587,7 @@ Response:
   "status": "true",
   "response": "City Survey API is running",
   "uptime": 1.23,
-  "timestamp": "2026-07-14T00:00:00.000Z"
+  "timestamp": "2026-07-15T00:00:00.000Z"
 }
 ```
 
@@ -626,6 +657,7 @@ Confirmed:
   - `ADD_UPDATE_SURVEY_TYPE`
   - `VIEW_PROPERTY_TYPE`
   - `ADD_UPDATE_PROPERTY_TYPE`
+  - `VIEW_MASTER_NAME`
 
 DB follow-up points:
 

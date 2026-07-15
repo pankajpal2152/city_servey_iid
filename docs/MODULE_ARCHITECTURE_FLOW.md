@@ -1,6 +1,6 @@
 # Module Architecture and Scenario Flow
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 ## Current Backend Scope
 
@@ -20,6 +20,7 @@ The City Survey backend currently exposes the following active APIs:
 - Add or update master survey type through `USP_POST_ALL_MASTER_DATA`
 - View master property type through `USP_GET_ALL_MASTER_DATA`
 - Add or update master property type through `USP_POST_ALL_MASTER_DATA`
+- View master details through `USP_GET_ALL_MASTER_DATA`
 - Check API process health through `GET /health`
 
 All other legacy event, attendee, payment, file upload, and email modules are
@@ -35,7 +36,7 @@ not mounted in `index.js` for this City Survey phase.
 | User route | `routes/user.js` | Handles user list view plus add/update user, calls user stored procedures | Active |
 | Customer route | `routes/customer.js` | Handles customer list view, specific customer profile, add/update customer details, and PIC records | Active |
 | Project route | `routes/project.js` | Handles project list view plus add/update project, calls project stored procedures | Active |
-| Master route | `routes/master.js` | Handles system-role, survey-type, and property-type master list view plus add/update APIs | Active |
+| Master route | `routes/master.js` | Handles system-role, survey-type, property-type, and master-details list view plus add/update APIs | Active |
 | Health route | `routes/health.js` | Returns a lightweight API status response without JWT or DB calls | Active |
 | JWT middleware | `middlewares/auth.js` | Validates `Authorization: Bearer <token>` before protected APIs | Active |
 | Procedure helper | `utils/procedureResponse.js` | Normalizes stored procedure `JSON_VALUE` responses | Active |
@@ -784,6 +785,48 @@ The API accepts the object shape provided by the database developer:
 If a client accidentally sends a one-item array, the backend unwraps the first
 object before calling the stored procedure.
 
+## Request Flow: View Master Details
+
+Endpoint:
+
+`GET /api/master/api-get-view-master-details`
+
+Stored procedure:
+
+`USP_GET_ALL_MASTER_DATA('VIEW_MASTER_NAME', P_ITEM, P_RECORD_SYS_ID, P_ORGANIZATION_SYS_ID, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Master API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Master Data Stored Procedure
+
+  UI->>API: GET master details with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Use ITEM query value or default VIEW_ALL
+  API->>API: Use RECORD_SYS_ID and ORGANIZATION_SYS_ID query values or default 0
+  API->>DB: CALL USP_GET_ALL_MASTER_DATA
+  DB->>SP: Fetch master details
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Master details JSON
+```
+
+Default query behavior:
+
+```text
+GET /api/master/api-get-view-master-details
+```
+
+is treated as:
+
+```text
+GET /api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+```
+
 ## Scenario Matrix
 
 | Scenario | API | Input | Expected Result |
@@ -813,6 +856,7 @@ object before calling the stored procedure.
 | View property types | `GET /api/master/api-get-view-master-property-type` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, property type list response |
 | Add property type | `POST /api/master/api-post-add-update-master-property-type` | Valid property type payload, valid token | HTTP 200, DB response, property type records may be created |
 | Missing property type fields | `POST /api/master/api-post-add-update-master-property-type` | Missing required ADD field, valid token | HTTP 400 with validation response |
+| View master details | `GET /api/master/api-get-view-master-details` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, master details response |
 | Health check | `GET /health` | No body | HTTP 200, API status JSON |
 | DB unavailable | Any DB-backed API | RDS/network issue | HTTP 500 with error message |
 
@@ -829,7 +873,7 @@ Backend owns:
 - Specific customer id validation
 - Customer payload validation before DB call
 - Project payload validation before DB call
-- Master system-role, survey-type, and property-type payload validation before DB call
+- Master system-role, survey-type, property-type, and master-details request validation before DB call
 
 Database owns:
 
@@ -843,6 +887,7 @@ Database owns:
 - System role insert/update rules
 - Survey type insert/update rules
 - Property type insert/update rules
+- Master name/details query rules
 - Stored procedure response messages
 
 Frontend owns:

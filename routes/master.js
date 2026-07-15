@@ -572,4 +572,87 @@ router.post('/api-post-add-update-master-property-type', auth, async (req, res) 
   }
 });
 
+// GET /api/master/api-get-view-master-details
+/**
+ * @swagger
+ * /api/master/api-get-view-master-details:
+ *   get:
+ *     tags:
+ *       - Master
+ *     summary: View City Survey master details
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: ITEM
+ *         schema:
+ *           type: string
+ *           default: VIEW_ALL
+ *         required: false
+ *         description: Master data view mode passed to the stored procedure
+ *         example: VIEW_ALL
+ *       - in: query
+ *         name: RECORD_SYS_ID
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         required: false
+ *         description: Master record id filter passed to the stored procedure
+ *         example: 0
+ *       - in: query
+ *         name: ORGANIZATION_SYS_ID
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         required: false
+ *         description: Organization id filter passed to the stored procedure
+ *         example: 0
+ *     responses:
+ *       200:
+ *         description: Master details response from stored procedure
+ *       400:
+ *         description: Invalid query parameter
+ *       401:
+ *         description: Authorization token missing
+ *       403:
+ *         description: Authorization token invalid
+ */
+router.get('/api-get-view-master-details', auth, async (req, res) => {
+  let conn;
+
+  try {
+    const item = req.query.ITEM || 'VIEW_ALL';
+    const recordSysId = parseIntWithDefault(req.query.RECORD_SYS_ID, 'RECORD_SYS_ID', 0);
+    const organizationSysId = parseIntWithDefault(req.query.ORGANIZATION_SYS_ID, 'ORGANIZATION_SYS_ID', 0);
+
+    if (recordSysId.error || organizationSysId.error) {
+      return res.status(400).json({
+        status: 'false',
+        response: recordSysId.error || organizationSysId.error,
+      });
+    }
+
+    conn = await db.getConnection();
+    const [rows] = await conn.execute(
+      'CALL USP_GET_ALL_MASTER_DATA(?, ?, ?, ?, @ERRNO, @ERRMSG);',
+      ['VIEW_MASTER_NAME', item, recordSysId.value, organizationSysId.value]
+    );
+
+    const result = getProcedureJsonValue(rows);
+
+    if (!result) {
+      return res.status(500).json({
+        status: 'false',
+        response: 'Oops!! something went wrong',
+      });
+    }
+
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 module.exports = router;

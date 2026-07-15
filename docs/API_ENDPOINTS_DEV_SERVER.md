@@ -1,5 +1,5 @@
 CITY SURVEY DEV SERVER API ENDPOINTS
-Date: 2026-07-14
+Date: 2026-07-15
 
 Swagger URL:
 https://api-dev.citysurveyors.com.sg/api/api-docs/
@@ -133,6 +133,12 @@ Body:
   "CREATED_BY": "1"
 }
 
+16. View Master Details
+Method: GET
+URL: https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
 14. View Master Property Type
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
@@ -183,4 +189,4 @@ NOTES
   DB records.
 - The full master property type payload is a write operation and may create dev
   DB records.
-- Full request/response examples are available in docs/API_URLS.txt.
+- Full request/response examples are available in docs/API_URLS.md.

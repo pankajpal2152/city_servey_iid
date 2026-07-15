@@ -1,6 +1,6 @@
 # Dev Server Deployment Checklist
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 ## Purpose
 
@@ -155,7 +155,7 @@ Verify:
 - Procedure `USP_POST_ALL_MASTER_DATA` exists
 - Sample auth call returns `status: true`
 
-Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.txt).
+Use the script from [Run and Test Guide](./RUN_AND_TEST_GUIDE.md).
 
 ## 8. API Verification Checklist
 
@@ -181,6 +181,8 @@ Verify with Swagger:
 - Protected survey-type API validates payload when token is provided
 - Protected property-type list API returns `VIEW_ALL` response
 - Protected property-type API validates payload when token is provided
+- Protected master-details API returns `VIEW_ALL` response at
+  `/api/master/api-get-view-master-details`
 - Duplicate sample email returns `This Email Id Already Exists`
 
 ## 9. Dev Server Process Checklist
@@ -229,6 +231,8 @@ Then run:
    `RECORD_SYS_ID is required`.
 7. Property-type validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `RECORD_SYS_ID is required`.
+8. Master-details GET at `/api/master/api-get-view-master-details` should
+   return HTTP 200 with `status: true` when a valid token is used.
 
 ## 11. Rollback Checklist
 
@@ -243,8 +247,9 @@ If deployment fails:
 
 ## 12. Known Dev Notes
 
-- During local testing on 2026-07-14, port `3000` was already occupied by a
+- During local testing on 2026-07-15, port `3000` was already occupied by a
   separate `node` process. The local City Survey `.env` now uses port `3103`.
 - The add/update stored procedure commits internally, so avoid write tests with
-  new email addresses, full customer payloads, full project payloads, or full
-  system-role payloads unless the team approves creating dev DB records.
+  new email addresses, full customer payloads, full project payloads, full
+  system-role payloads, full survey-type payloads, or full property-type
+  payloads unless the team approves creating dev DB records.

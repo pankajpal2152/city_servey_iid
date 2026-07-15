@@ -1,6 +1,6 @@
 # Browser Demo and Demo Flow
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 ## Demo Goal
 
@@ -21,6 +21,7 @@ RDS database and that the active APIs work end to end:
 - Add/update survey type with JWT protection
 - View property types with JWT protection
 - Add/update property type with JWT protection
+- View master details with JWT protection
 - Health check without JWT
 
 ## Pre-Demo Checklist
@@ -101,6 +102,7 @@ Expected:
   - `POST /api/master/api-post-add-update-master-survey-type`
   - `GET /api/master/api-get-view-master-property-type`
   - `POST /api/master/api-post-add-update-master-property-type`
+  - `GET /api/master/api-get-view-master-details`
 
 ### Step 2: Show Health Check
 
@@ -575,6 +577,29 @@ Expected safe demo result:
 This proves Swagger and JWT reach the property-type master route without
 creating a property-type record.
 
+### Step 19: Test Protected Master Details API
+
+Open:
+
+`GET /api/master/api-get-view-master-details`
+
+Click:
+
+`Try it out`
+
+Keep `ITEM` as `VIEW_ALL`. Use `0` for `RECORD_SYS_ID` and
+`ORGANIZATION_SYS_ID` unless testing a specific filter.
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status: true`
+- Response contains master details rows when data exists
+
 Only execute full database developer samples if the team approves creating real
 dev DB system-role, survey-type, or property-type records.
 
@@ -772,6 +797,19 @@ const propertyTypeListResponse = await fetch(`${baseUrl}/api/master/api-get-view
 });
 
 console.log(propertyTypeListResponse.status, await propertyTypeListResponse.json());
+```
+
+To view the master details list:
+
+```javascript
+const masterDetailsResponse = await fetch(`${baseUrl}/api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+});
+
+console.log(masterDetailsResponse.status, await masterDetailsResponse.json());
 ```
 
 To validate the system-role add/update route without writing data:

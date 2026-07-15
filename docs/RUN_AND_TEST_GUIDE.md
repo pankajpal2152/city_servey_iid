@@ -1,6 +1,6 @@
 # Run and Test Guide
 
-Date: 2026-07-14
+Date: 2026-07-15
 
 ## 1. Install Dependencies
 
@@ -155,15 +155,16 @@ Confirm these tags and endpoints are visible:
 - `Master`: `POST /api/master/api-post-add-update-master-survey-type`
 - `Master`: `GET /api/master/api-get-view-master-property-type`
 - `Master`: `POST /api/master/api-post-add-update-master-property-type`
+- `Master`: `GET /api/master/api-get-view-master-details`
 
-Run the browser demo steps from [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.txt).
+Run the browser demo steps from [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.md).
 
 Dev server Swagger:
 
 `https://api-dev.citysurveyors.com.sg/api/api-docs/`
 
-UI developers can use [API_ENDPOINTS_DEV_SERVER.txt](./API_ENDPOINTS_DEV_SERVER.txt)
-or [API_URLS.txt](./API_URLS.txt) for copy-paste API URLs.
+UI developers can use [API_ENDPOINTS_DEV_SERVER.md](./API_ENDPOINTS_DEV_SERVER.md)
+or [API_URLS.md](./API_URLS.md) for copy-paste API URLs.
 
 ## 7. PowerShell API Smoke Test
 
@@ -342,6 +343,20 @@ Expected:
 
 - `status: true`
 - `response` contains property-type data when records exist
+
+Then test protected master-details API without writing data:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0" `
+  -Method Get `
+  -Headers $headers
+```
+
+Expected:
+
+- `status: true`
+- `response` contains master details data when records exist
 
 Then test protected customer add/update route validation without writing data:
 
@@ -623,6 +638,14 @@ async function getEmailCount(connection) {
     });
     const propertyTypeListJson = await propertyTypeListResponse.json();
 
+    const masterDetailsResponse = await fetch(`${baseUrl}/api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+    });
+    const masterDetailsJson = await masterDetailsResponse.json();
+
     const projectValidationResponse = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {
       method: 'POST',
       headers: {
@@ -697,6 +720,8 @@ async function getEmailCount(connection) {
       survey_type_validation_response: surveyTypeValidationJson.response,
       property_type_list_http_status: propertyTypeListResponse.status,
       property_type_list_status: propertyTypeListJson.status,
+      master_details_http_status: masterDetailsResponse.status,
+      master_details_status: masterDetailsJson.status,
       property_type_validation_http_status: propertyTypeValidationResponse.status,
       property_type_validation_response: propertyTypeValidationJson.response,
     });
@@ -744,6 +769,8 @@ Expected:
 - `survey_type_validation_response: RECORD_SYS_ID is required`
 - `property_type_list_http_status: 200`
 - `property_type_list_status: true`
+- `master_details_http_status: 200`
+- `master_details_status: true`
 - `property_type_validation_http_status: 400`
 - `property_type_validation_response: RECORD_SYS_ID is required`
 
