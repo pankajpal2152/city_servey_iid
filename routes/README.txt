@@ -23,6 +23,7 @@ Active endpoints:
 - `GET /api/customer/api-get-view-specific-customer-details`
 - `POST /api/customer/api-post-add-update-customer-details`
 - `GET /api/project/api-get-view-list-project-details`
+- `GET /api/project/api-get-view-specific-project-details`
 - `POST /api/project/api-post-add-update-project`
 - `GET /api/master/api-get-view-master-system-roles`
 - `POST /api/master/api-post-add-update-master-system-role`

@@ -150,6 +150,7 @@ Verify:
 - Procedure `USP_GET_SPECIFIC_CUSTOMER_ACTIVITY` exists
 - Procedure `USP_POST_CUSTOMER_DETAILS_ACTIVITY` exists
 - Procedure `USP_GET_LIST_PROJECT_ACTIVITY` exists
+- Procedure `USP_GET_SPECIFIC_PROJECT_ACTIVITY` exists
 - Procedure `USP_POST_PROJECT_ACTIVITY` exists
 - Procedure `USP_GET_ALL_MASTER_DATA` exists
 - Procedure `USP_POST_ALL_MASTER_DATA` exists
@@ -174,6 +175,7 @@ Verify with Swagger:
 - Protected specific customer API returns `PROFILE` response for a valid customer id
 - Protected customer API validates payload when token is provided
 - Protected project list API returns `VIEW_ALL` response
+- Protected specific project API returns `SPECIFIC` response for `PROJECT_SYS_ID`
 - Protected project API validates payload when token is provided
 - Protected system-role list API returns `VIEW_ALL` response
 - Protected system-role API validates payload when token is provided
@@ -223,7 +225,8 @@ Then run:
 2. Valid auth body should return HTTP 200 and token.
 3. Add/update duplicate sample user should return HTTP 200 and duplicate email
    response.
-4. Project validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+4. Specific project GET at `/api/project/api-get-view-specific-project-details?ITEM=SPECIFIC&PROJECT_SYS_ID=2` should return HTTP 200 when that dev record exists.
+5. Project validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `CUSTOMER_SYS_ID is required`.
 5. System-role validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `RECORD_SYS_ID is required`.

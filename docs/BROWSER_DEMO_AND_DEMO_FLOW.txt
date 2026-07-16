@@ -14,6 +14,7 @@ RDS database and that the active APIs work end to end:
 - View specific customer details with JWT protection
 - Add/update customer details with JWT protection
 - View project list with JWT protection
+- View specific project details with JWT protection
 - Add/update project with JWT protection
 - View system roles with JWT protection
 - Add/update system role with JWT protection
@@ -95,6 +96,7 @@ Expected:
   - `GET /api/customer/api-get-view-specific-customer-details`
   - `POST /api/customer/api-post-add-update-customer-details`
   - `GET /api/project/api-get-view-list-project-details`
+  - `GET /api/project/api-get-view-specific-project-details`
   - `POST /api/project/api-post-add-update-project`
   - `GET /api/master/api-get-view-master-system-roles`
   - `POST /api/master/api-post-add-update-master-system-role`
@@ -373,7 +375,34 @@ Expected:
 - Response contains `status: true`
 - Response contains project rows when data exists
 
-### Step 12: Test Protected Project API Routing Safely
+### Step 12: Test Protected Specific Project Details API
+
+Open:
+
+`GET /api/project/api-get-view-specific-project-details`
+
+Click:
+
+`Try it out`
+
+Use:
+
+```text
+ITEM=SPECIFIC
+PROJECT_SYS_ID=2
+```
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status: true` when the project id exists
+- Response contains specific project details from the stored procedure
+
+### Step 13: Test Protected Project API Routing Safely
 
 Open:
 
@@ -409,7 +438,7 @@ record.
 Only execute the full database developer sample if the team approves creating
 real dev DB project records.
 
-### Step 13: Test Protected System Role List API
+### Step 14: Test Protected System Role List API
 
 Open:
 
@@ -432,7 +461,7 @@ Expected:
 - Response contains `status: true`
 - Response contains system role rows when data exists
 
-### Step 14: Test Protected System Role API Routing Safely
+### Step 15: Test Protected System Role API Routing Safely
 
 Open:
 
@@ -465,7 +494,7 @@ Expected safe demo result:
 This proves Swagger and JWT reach the system-role master route without creating
 a system-role record.
 
-### Step 15: Test Protected Survey Type List API
+### Step 16: Test Protected Survey Type List API
 
 Open:
 
@@ -488,7 +517,7 @@ Expected:
 - Response contains `status: true`
 - Response contains survey type rows when data exists
 
-### Step 16: Test Protected Survey Type API Routing Safely
+### Step 17: Test Protected Survey Type API Routing Safely
 
 Open:
 
@@ -521,7 +550,7 @@ Expected safe demo result:
 This proves Swagger and JWT reach the survey-type master route without creating
 a survey-type record.
 
-### Step 17: Test Protected Property Type List API
+### Step 18: Test Protected Property Type List API
 
 Open:
 
@@ -544,7 +573,7 @@ Expected:
 - Response contains `status: true`
 - Response contains property type rows when data exists
 
-### Step 18: Test Protected Property Type API Routing Safely
+### Step 19: Test Protected Property Type API Routing Safely
 
 Open:
 
@@ -577,7 +606,7 @@ Expected safe demo result:
 This proves Swagger and JWT reach the property-type master route without
 creating a property-type record.
 
-### Step 19: Test Protected Master Details API
+### Step 20: Test Protected Master Details API
 
 Open:
 
@@ -623,7 +652,8 @@ dev DB system-role, survey-type, or property-type records.
 12. "For customer add/update, I will show the protected route validation. The
    full sample is a write operation and should be run only with team approval."
 13. "Then I will show the read-only project list API."
-14. "For project add/update, I will show the protected route validation. The
+14. "Then I will show the specific project details API using PROJECT_SYS_ID."
+15. "For project add/update, I will show the protected route validation. The
    full sample is also a write operation and should be run only with team
    approval."
 15. "Then I will show the read-only system role list API."
@@ -743,6 +773,19 @@ const projectListResponse = await fetch(`${baseUrl}/api/project/api-get-view-lis
 });
 
 console.log(projectListResponse.status, await projectListResponse.json());
+```
+
+To validate the specific project details route without writing data:
+
+```javascript
+const specificProjectResponse = await fetch(`${baseUrl}/api/project/api-get-view-specific-project-details?ITEM=SPECIFIC&PROJECT_SYS_ID=2`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+});
+
+console.log(specificProjectResponse.status, await specificProjectResponse.json());
 ```
 
 To validate the project add/update route without writing data:

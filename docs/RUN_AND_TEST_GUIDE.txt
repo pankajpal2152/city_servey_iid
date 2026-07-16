@@ -70,7 +70,7 @@ const mysql = require('mysql2/promise');
        FROM INFORMATION_SCHEMA.ROUTINES
       WHERE ROUTINE_SCHEMA = ?
         AND ROUTINE_TYPE = 'PROCEDURE'
-        AND ROUTINE_NAME IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        AND ROUTINE_NAME IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ORDER BY ROUTINE_NAME`,
     [
       process.env.DB_NAME,
@@ -81,6 +81,7 @@ const mysql = require('mysql2/promise');
       'USP_GET_SPECIFIC_CUSTOMER_ACTIVITY',
       'USP_POST_CUSTOMER_DETAILS_ACTIVITY',
       'USP_GET_LIST_PROJECT_ACTIVITY',
+      'USP_GET_SPECIFIC_PROJECT_ACTIVITY',
       'USP_POST_PROJECT_ACTIVITY',
       'USP_GET_ALL_MASTER_DATA',
       'USP_POST_ALL_MASTER_DATA',
@@ -148,6 +149,7 @@ Confirm these tags and endpoints are visible:
 - `Customer`: `GET /api/customer/api-get-view-specific-customer-details`
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
 - `Project`: `GET /api/project/api-get-view-list-project-details`
+- `Project`: `GET /api/project/api-get-view-specific-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
 - `Master`: `GET /api/master/api-get-view-master-system-roles`
 - `Master`: `POST /api/master/api-post-add-update-master-system-role`
@@ -301,6 +303,20 @@ Expected:
 
 - `status: true`
 - `response` contains project list data when records exist
+
+Then test protected specific project details API without writing data:
+
+```powershell
+Invoke-RestMethod `
+  -Uri "$baseUrl/api/project/api-get-view-specific-project-details?ITEM=SPECIFIC&PROJECT_SYS_ID=2" `
+  -Method Get `
+  -Headers $headers
+```
+
+Expected:
+
+- `status: true`
+- `response` contains specific project details data when the project id exists
 
 Then test protected system-role list API without writing data:
 
@@ -614,6 +630,14 @@ async function getEmailCount(connection) {
     });
     const projectListJson = await projectListResponse.json();
 
+    const specificProjectResponse = await fetch(`${baseUrl}/api/project/api-get-view-specific-project-details?ITEM=SPECIFIC&PROJECT_SYS_ID=2`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authJson.Token}`,
+      },
+    });
+    const specificProjectJson = await specificProjectResponse.json();
+
     const systemRoleListResponse = await fetch(`${baseUrl}/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0`, {
       method: 'GET',
       headers: {
@@ -708,6 +732,8 @@ async function getEmailCount(connection) {
       specific_customer_status: specificCustomerJson.status,
       project_list_http_status: projectListResponse.status,
       project_list_status: projectListJson.status,
+      specific_project_http_status: specificProjectResponse.status,
+      specific_project_status: specificProjectJson.status,
       project_validation_http_status: projectValidationResponse.status,
       project_validation_response: projectValidationJson.response,
       system_role_list_http_status: systemRoleListResponse.status,
@@ -757,6 +783,8 @@ Expected:
 - `specific_customer_status: true`
 - `project_list_http_status: 200`
 - `project_list_status: true`
+- `specific_project_http_status: 200` when `PROJECT_SYS_ID=2` exists
+- `specific_project_status: true` when `PROJECT_SYS_ID=2` exists
 - `project_validation_http_status: 400`
 - `project_validation_response: CUSTOMER_SYS_ID is required`
 - `system_role_list_http_status: 200`

@@ -1,7 +1,7 @@
 # City Survey Node.js API
 
 Express backend for the City Survey application. The active scope is user
-authentication, user list/add/update, customer list/profile/add/update, project list/add/update,
+authentication, user list/add/update, customer list/profile/add/update, project list/specific details/add/update,
 master system role list/add/update, master survey type list/add/update, master property type list/add/update, master details view, and API health checks
 through Node.js, Express, JWT, Swagger, and MySQL stored procedures.
 
@@ -29,6 +29,7 @@ https://api-dev.citysurveyors.com.sg/api/api-docs/
 | Customer | GET    | `/api/customer/api-get-view-specific-customer-details` | Yes  |
 | Customer | POST   | `/api/customer/api-post-add-update-customer-details`   | Yes  |
 | Project  | GET    | `/api/project/api-get-view-list-project-details`       | Yes  |
+| Project  | GET    | `/api/project/api-get-view-specific-project-details`   | Yes  |
 | Project  | POST   | `/api/project/api-post-add-update-project`             | Yes  |
 | Master   | GET    | `/api/master/api-get-view-master-system-roles`         | Yes  |
 | Master   | POST   | `/api/master/api-post-add-update-master-system-role`   | Yes  |
@@ -100,6 +101,7 @@ Swagger must show these City Survey tags and APIs in the browser:
 - `Customer`: `GET /api/customer/api-get-view-specific-customer-details`
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
 - `Project`: `GET /api/project/api-get-view-list-project-details`
+- `Project`: `GET /api/project/api-get-view-specific-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
 - `Master`: `GET /api/master/api-get-view-master-system-roles`
 - `Master`: `POST /api/master/api-post-add-update-master-system-role`
@@ -241,6 +243,32 @@ ITEM=VIEW_ALL
 ```
 
 If `ITEM` is not provided, the API defaults to `VIEW_ALL`.
+
+### View Specific Project Details
+
+`GET /api/project/api-get-view-specific-project-details`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_SPECIFIC_PROJECT_ACTIVITY('VIEW_PROJECT', 'SPECIFIC', 2, @ERRNO, @ERRMSG);
+```
+
+Required query parameter:
+
+```text
+PROJECT_SYS_ID=2
+```
+
+Optional query parameter:
+
+```text
+ITEM=SPECIFIC
+```
+
+If `ITEM` is not provided, the API defaults to `SPECIFIC`.
 
 ### Add or Update Project
 

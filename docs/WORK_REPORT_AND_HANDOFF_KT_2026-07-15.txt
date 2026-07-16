@@ -35,6 +35,9 @@ Completed items:
 - Implemented active project list details API:
   - `GET /api/project/api-get-view-list-project-details`
   - Procedure: `USP_GET_LIST_PROJECT_ACTIVITY`
+- Implemented active specific project details API:
+  - `GET /api/project/api-get-view-specific-project-details`
+  - Procedure: `USP_GET_SPECIFIC_PROJECT_ACTIVITY`
 - Implemented active master system role list API:
   - `GET /api/master/api-get-view-master-system-roles`
   - Procedure: `USP_GET_ALL_MASTER_DATA`
@@ -63,6 +66,7 @@ Completed items:
 - Added JWT protection for user list, add/update user, and customer details.
 - Added JWT protection for add/update project.
 - Added JWT protection for project list details.
+- Added JWT protection and `PROJECT_SYS_ID` validation for specific project details.
 - Added JWT protection for master system role list and add/update.
 - Added response helper for stored procedure `JSON_VALUE` parsing.
 - Disabled active mounting of old event, attendee, payment, file upload, and
@@ -144,6 +148,7 @@ Database checks:
   - `USP_GET_SPECIFIC_CUSTOMER_ACTIVITY`
   - `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
   - `USP_GET_LIST_PROJECT_ACTIVITY`
+  - `USP_GET_SPECIFIC_PROJECT_ACTIVITY`
   - `USP_POST_PROJECT_ACTIVITY`
   - `USP_GET_ALL_MASTER_DATA`
   - `USP_POST_ALL_MASTER_DATA`
@@ -167,6 +172,8 @@ HTTP API smoke test:
   full project samples are write operations.
 - Project list route can be tested safely with `ITEM=VIEW_ALL`; it is a
   read-only API.
+- Specific project route can be tested safely with `ITEM=SPECIFIC` and
+  `PROJECT_SYS_ID=2`; it is a read-only API.
 - System role list route can be tested safely with `ITEM=VIEW_ALL`; it is a
   read-only API.
 - System role add/update route validation can be tested safely with
@@ -574,6 +581,31 @@ Default query:
 ITEM=VIEW_ALL
 ```
 
+### View Specific Project Details
+
+Endpoint:
+
+`GET /api/project/api-get-view-specific-project-details`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_SPECIFIC_PROJECT_ACTIVITY('VIEW_PROJECT', 'SPECIFIC', 2, @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=SPECIFIC
+PROJECT_SYS_ID=2
+```
+
 ### Health Check
 
 Endpoint:
@@ -622,6 +654,7 @@ Walkthrough order:
 8. Show `routes/project.js`:
    - requires JWT middleware
    - calls project list procedure for view/list
+   - validates `PROJECT_SYS_ID` and calls specific project procedure
    - validates `ITEM` and required `ADD` fields
    - calls project procedure
 9. Show `routes/master.js`:
@@ -634,9 +667,9 @@ Walkthrough order:
 11. Show `utils/procedureResponse.js`:
    - parses procedure response safely
 12. Show Swagger at `/api/api-docs`.
-13. Run health, auth, user, customer list, project list, system role list, safe
-    customer validation, safe project validation, and safe system-role
-    validation demo.
+13. Run health, auth, user, customer list, project list, specific project
+    details, system role list, safe customer validation, safe project
+    validation, and safe system-role validation demo.
 
 ## Handoff KT for Database Developer
 

@@ -51,6 +51,7 @@ http://localhost:3104
 | View specific customer details | GET | `/api/customer/api-get-view-specific-customer-details` | Yes |
 | Add/update customer details | POST | `/api/customer/api-post-add-update-customer-details` | Yes |
 | View project list | GET | `/api/project/api-get-view-list-project-details` | Yes |
+| View specific project details | GET | `/api/project/api-get-view-specific-project-details` | Yes |
 | Add/update project | POST | `/api/project/api-post-add-update-project` | Yes |
 | View system roles | GET | `/api/master/api-get-view-master-system-roles` | Yes |
 | Add/update system role | POST | `/api/master/api-post-add-update-master-system-role` | Yes |
@@ -400,6 +401,33 @@ The response comes from `USP_GET_LIST_PROJECT_ACTIVITY`. UI should use the
 
 Use this API to populate project tables, dashboards, and project management
 screens.
+
+## View Specific Project Details Integration
+
+### Request
+
+```http
+GET /api/project/api-get-view-specific-project-details?ITEM=SPECIFIC&PROJECT_SYS_ID=2
+Authorization: Bearer <Token>
+```
+
+`PROJECT_SYS_ID` is required. `ITEM` is optional; if omitted, the backend sends
+`SPECIFIC` to the stored procedure.
+
+### Expected Response Shape
+
+The response comes from `USP_GET_SPECIFIC_PROJECT_ACTIVITY`. UI should use the
+`response` field when `status` is `true`.
+
+```json
+{
+  "status": "true",
+  "response": {}
+}
+```
+
+Use this API for project detail pages, edit-project prefill, and project summary
+views opened from project list rows.
 
 ## Add/Update Project Integration
 
@@ -805,6 +833,28 @@ export async function getProjectList(token, item = 'VIEW_ALL') {
   return data;
 }
 
+export async function getSpecificProject(token, projectSysId, item = 'SPECIFIC') {
+  const query = new URLSearchParams({
+    ITEM: item,
+    PROJECT_SYS_ID: String(projectSysId),
+  });
+
+  const response = await fetch(`${baseUrl}/api/project/api-get-view-specific-project-details?${query.toString()}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.response || data.error || 'Project details failed');
+  }
+
+  return data;
+}
+
 export async function addProject(token, payload) {
   const response = await fetch(`${baseUrl}/api/project/api-post-add-update-project`, {
     method: 'POST',
@@ -1033,6 +1083,17 @@ export async function getProjectList(token, item = 'VIEW_ALL') {
   return data;
 }
 
+export async function getSpecificProject(token, projectSysId, item = 'SPECIFIC') {
+  const { data } = await api.get('/api/project/api-get-view-specific-project-details', {
+    params: { ITEM: item, PROJECT_SYS_ID: projectSysId },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return data;
+}
+
 export async function addProject(token, payload) {
   const { data } = await api.post('/api/project/api-post-add-update-project', payload, {
     headers: {
@@ -1181,6 +1242,7 @@ Behavior:
 - Load survey type options from the master survey type API.
 - Load property type options from the master property type API.
 - Load existing projects with the project list API.
+- Open project detail/edit screens with the specific project details API.
 - Send payload to project add/update API.
 - Show success or failure message from `response`.
 - During demos, use validation-only body `{ "ITEM": "ADD" }` unless the team
@@ -1246,8 +1308,10 @@ Behavior:
 7. Confirm duplicate email message appears.
 8. Open customer form.
 9. Submit validation-only sample or approved full customer sample.
-10. Open project form.
-11. Submit validation-only sample or approved full project sample.
+10. Open project list.
+11. Open a project detail using `PROJECT_SYS_ID`.
+12. Open project form.
+13. Submit validation-only sample or approved full project sample.
 12. Open system role form.
 13. Submit validation-only sample or approved full system role sample.
 14. Open survey type form.

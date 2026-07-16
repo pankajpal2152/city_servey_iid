@@ -27,7 +27,7 @@ const options = {
       },
       {
         name: 'Project',
-        description: 'City Survey project list and add/update APIs'
+        description: 'City Survey project list, specific details, and add/update APIs'
       },
       {
         name: 'Master',

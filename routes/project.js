@@ -9,6 +9,20 @@ function getProjectPayload(body) {
   return Array.isArray(body) ? body[0] : body;
 }
 
+function parseRequiredInt(value, fieldName) {
+  if (value === undefined || value === null || value === '') {
+    return { error: `${fieldName} is required` };
+  }
+
+  const parsedValue = Number(value);
+
+  if (!Number.isInteger(parsedValue)) {
+    return { error: `${fieldName} must be an integer` };
+  }
+
+  return { value: parsedValue };
+}
+
 function validateProjectPayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return 'Request body must be a project object';
@@ -79,6 +93,79 @@ router.get('/api-get-view-list-project-details', auth, async (req, res) => {
     const [rows] = await conn.execute(
       'CALL USP_GET_LIST_PROJECT_ACTIVITY(?, ?, @ERRNO, @ERRMSG);',
       ['VIEW_PROJECT', item]
+    );
+
+    const result = getProcedureJsonValue(rows);
+
+    if (!result) {
+      return res.status(500).json({
+        status: 'false',
+        response: 'Oops!! something went wrong',
+      });
+    }
+
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// GET /api/project/api-get-view-specific-project-details
+/**
+ * @swagger
+ * /api/project/api-get-view-specific-project-details:
+ *   get:
+ *     tags:
+ *       - Project
+ *     summary: View specific City Survey project details
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: ITEM
+ *         schema:
+ *           type: string
+ *           default: SPECIFIC
+ *         required: false
+ *         description: Specific project view mode passed to the stored procedure
+ *         example: SPECIFIC
+ *       - in: query
+ *         name: PROJECT_SYS_ID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Project record id
+ *         example: 2
+ *     responses:
+ *       200:
+ *         description: Specific project details response from stored procedure
+ *       400:
+ *         description: Invalid request parameter
+ *       401:
+ *         description: Authorization token missing
+ *       403:
+ *         description: Authorization token invalid
+ */
+router.get('/api-get-view-specific-project-details', auth, async (req, res) => {
+  let conn;
+
+  try {
+    const item = req.query.ITEM || 'SPECIFIC';
+    const projectSysId = parseRequiredInt(req.query.PROJECT_SYS_ID, 'PROJECT_SYS_ID');
+
+    if (projectSysId.error) {
+      return res.status(400).json({
+        status: 'false',
+        response: projectSysId.error,
+      });
+    }
+
+    conn = await db.getConnection();
+    const [rows] = await conn.execute(
+      'CALL USP_GET_SPECIFIC_PROJECT_ACTIVITY(?, ?, ?, @ERRNO, @ERRMSG);',
+      ['VIEW_PROJECT', item, projectSysId.value]
     );
 
     const result = getProcedureJsonValue(rows);
