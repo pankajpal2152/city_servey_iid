@@ -1,6 +1,6 @@
 # Work Report and Backend Handoff KT
 
-Date: 2026-07-15
+Date: 2026-07-17
 
 ## Work Completed Today
 
@@ -38,6 +38,9 @@ Completed items:
 - Implemented active specific project details API:
   - `GET /api/project/api-get-view-specific-project-details`
   - Procedure: `USP_GET_SPECIFIC_PROJECT_ACTIVITY`
+- Implemented active customer-wise project details API:
+  - `GET /api/project/api-get-view-specific-customer-wise-project-details`
+  - Procedure: `USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY`
 - Implemented active master system role list API:
   - `GET /api/master/api-get-view-master-system-roles`
   - Procedure: `USP_GET_ALL_MASTER_DATA`
@@ -67,6 +70,7 @@ Completed items:
 - Added JWT protection for add/update project.
 - Added JWT protection for project list details.
 - Added JWT protection and `PROJECT_SYS_ID` validation for specific project details.
+- Added JWT protection and `CUSTOMER_SYS_ID` validation for customer-wise project details.
 - Added JWT protection for master system role list and add/update.
 - Added response helper for stored procedure `JSON_VALUE` parsing.
 - Disabled active mounting of old event, attendee, payment, file upload, and
@@ -119,7 +123,7 @@ Documentation files:
 - `docs/RUN_AND_TEST_GUIDE.md`
 - `docs/API_URLS.md`
 - `docs/API_ENDPOINTS_DEV_SERVER.md`
-- `docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-15.md`
+- `docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-17.md`
 - `docs/UI_DEVELOPER_HANDOFF_KT.md`
 
 ## Verification Done
@@ -149,6 +153,7 @@ Database checks:
   - `USP_POST_CUSTOMER_DETAILS_ACTIVITY`
   - `USP_GET_LIST_PROJECT_ACTIVITY`
   - `USP_GET_SPECIFIC_PROJECT_ACTIVITY`
+  - `USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY`
   - `USP_POST_PROJECT_ACTIVITY`
   - `USP_GET_ALL_MASTER_DATA`
   - `USP_POST_ALL_MASTER_DATA`
@@ -174,6 +179,11 @@ HTTP API smoke test:
   read-only API.
 - Specific project route can be tested safely with `ITEM=SPECIFIC` and
   `PROJECT_SYS_ID=2`; it is a read-only API.
+- Customer-wise project route can be tested safely with `ITEM=SPECIFIC` and
+  `CUSTOMER_SYS_ID=4`; it is a read-only API.
+- Current customer-wise project DB verification reaches
+  `USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY`, but the procedure returns
+  `ERRNO=1054` with `Unknown column 'PI.PROJECT_ADDRESS' in 'field list'`.
 - System role list route can be tested safely with `ITEM=VIEW_ALL`; it is a
   read-only API.
 - System role add/update route validation can be tested safely with
@@ -606,6 +616,31 @@ ITEM=SPECIFIC
 PROJECT_SYS_ID=2
 ```
 
+### View Customer-Wise Project Details
+
+Endpoint:
+
+`GET /api/project/api-get-view-specific-customer-wise-project-details`
+
+Header:
+
+```text
+Authorization: Bearer <Token>
+```
+
+Stored procedure call:
+
+```sql
+CALL USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY('VIEW_CUSTOMER_WISE_PROJECT', 'SPECIFIC', 4, @ERRNO, @ERRMSG);
+```
+
+Default query:
+
+```text
+ITEM=SPECIFIC
+CUSTOMER_SYS_ID=4
+```
+
 ### Health Check
 
 Endpoint:
@@ -619,7 +654,7 @@ Response:
   "status": "true",
   "response": "City Survey API is running",
   "uptime": 1.23,
-  "timestamp": "2026-07-15T00:00:00.000Z"
+  "timestamp": "2026-07-17T00:00:00.000Z"
 }
 ```
 
@@ -655,6 +690,7 @@ Walkthrough order:
    - requires JWT middleware
    - calls project list procedure for view/list
    - validates `PROJECT_SYS_ID` and calls specific project procedure
+   - validates `CUSTOMER_SYS_ID` and calls customer-wise project procedure
    - validates `ITEM` and required `ADD` fields
    - calls project procedure
 9. Show `routes/master.js`:
@@ -668,7 +704,7 @@ Walkthrough order:
    - parses procedure response safely
 12. Show Swagger at `/api/api-docs`.
 13. Run health, auth, user, customer list, project list, specific project
-    details, system role list, safe customer validation, safe project
+    details, customer-wise project details, system role list, safe customer validation, safe project
     validation, and safe system-role validation demo.
 
 ## Handoff KT for Database Developer
@@ -683,6 +719,7 @@ Confirmed:
   - `VIEW_CUSTOMER`
   - `ADD_UPDATE_CUSTOMER`
   - `VIEW_PROJECT`
+  - `VIEW_CUSTOMER_WISE_PROJECT`
   - `ADD_UPDATE_PROJECT`
   - `VIEW_SYSTEM_ROLE`
   - `ADD_UPDATE_SYSTEM_ROLE`
@@ -694,6 +731,8 @@ Confirmed:
 
 DB follow-up points:
 
+- Fix `USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY`; current dev response
+  is `ERRNO=1054` and `Unknown column 'PI.PROJECT_ADDRESS' in 'field list'`.
 - Confirm final JSON shape for `USP_POST_USER_PROFILE_ACTIVITY`. Current live
   procedure uses `$[0]`, so backend sends array shape to DB.
 - Confirm update-user payload fields for `ITEM: UPDATE_USER`.

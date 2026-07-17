@@ -1,5 +1,5 @@
 CITY SURVEY DEV SERVER API ENDPOINTS
-Date: 2026-07-15
+Date: 2026-07-17
 
 Swagger URL:
 https://api-dev.citysurveyors.com.sg/api/api-docs/
@@ -81,7 +81,13 @@ URL: https://api-dev.citysurveyors.com.sg/api/project/api-get-view-specific-proj
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-10. Add or Update Project
+10. View Specific Customer-Wise Project Details
+Method: GET
+URL: https://api-dev.citysurveyors.com.sg/api/project/api-get-view-specific-customer-wise-project-details?ITEM=SPECIFIC&CUSTOMER_SYS_ID=4
+Auth Required: Yes
+Header: Authorization: Bearer <Token>
+
+11. Add or Update Project
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/project/api-post-add-update-project
 Auth Required: Yes
@@ -99,13 +105,13 @@ Body:
   "CREATED_BY": 1
 }
 
-11. View Master System Roles
+12. View Master System Roles
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-12. Add or Update Master System Role
+13. Add or Update Master System Role
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-system-role
 Auth Required: Yes
@@ -120,13 +126,13 @@ Body:
   "CREATED_BY": 1
 }
 
-13. View Master Survey Type
+14. View Master Survey Type
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-survey-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-14. Add or Update Master Survey Type
+15. Add or Update Master Survey Type
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-survey-type
 Auth Required: Yes
@@ -139,13 +145,13 @@ Body:
   "CREATED_BY": "1"
 }
 
-15. View Master Property Type
+16. View Master Property Type
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-property-type?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 Auth Required: Yes
 Header: Authorization: Bearer <Token>
 
-16. Add or Update Master Property Type
+17. Add or Update Master Property Type
 Method: POST
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-post-add-update-master-property-type
 Auth Required: Yes
@@ -158,7 +164,7 @@ Body:
   "CREATED_BY": "1"
 }
 
-17. View Master Details
+18. View Master Details
 Method: GET
 URL: https://api-dev.citysurveyors.com.sg/api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 Auth Required: Yes
@@ -175,6 +181,7 @@ GET  /api/customer/api-get-view-specific-customer-details?ITEM=PROFILE&CUSTOMER_
 POST /api/customer/api-post-add-update-customer-details
 GET  /api/project/api-get-view-list-project-details?ITEM=VIEW_ALL
 GET  /api/project/api-get-view-specific-project-details?ITEM=SPECIFIC&PROJECT_SYS_ID=2
+GET  /api/project/api-get-view-specific-customer-wise-project-details?ITEM=SPECIFIC&CUSTOMER_SYS_ID=4
 POST /api/project/api-post-add-update-project
 GET  /api/master/api-get-view-master-system-roles?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANIZATION_SYS_ID=0
 POST /api/master/api-post-add-update-master-system-role

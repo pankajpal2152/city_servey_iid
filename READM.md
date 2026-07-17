@@ -1,7 +1,7 @@
 # City Survey Node.js API
 
 Express backend for the City Survey application. The active scope is user
-authentication, user list/add/update, customer list/profile/add/update, project list/specific details/add/update,
+authentication, user list/add/update, customer list/profile/add/update, project list/specific details/customer-wise details/add/update,
 master system role list/add/update, master survey type list/add/update, master property type list/add/update, master details view, and API health checks
 through Node.js, Express, JWT, Swagger, and MySQL stored procedures.
 
@@ -19,25 +19,26 @@ Dev Swagger URL:
 https://api-dev.citysurveyors.com.sg/api/api-docs/
 ```
 
-| Module   | Method | Endpoint                                                 | Auth |
-| -------- | ------ | -------------------------------------------------------- | ---- |
-| Health   | GET    | `/health`                                              | No   |
-| Auth     | POST   | `/api/auth/api-post-authenticate-user`                 | No   |
-| User     | GET    | `/api/user/api-get-view-user-list-info`                | Yes  |
-| User     | POST   | `/api/user/api-post-add-update-user`                   | Yes  |
-| Customer | GET    | `/api/customer/api-get-view-list-customer-details`     | Yes  |
-| Customer | GET    | `/api/customer/api-get-view-specific-customer-details` | Yes  |
-| Customer | POST   | `/api/customer/api-post-add-update-customer-details`   | Yes  |
-| Project  | GET    | `/api/project/api-get-view-list-project-details`       | Yes  |
-| Project  | GET    | `/api/project/api-get-view-specific-project-details`   | Yes  |
-| Project  | POST   | `/api/project/api-post-add-update-project`             | Yes  |
-| Master   | GET    | `/api/master/api-get-view-master-system-roles`         | Yes  |
-| Master   | POST   | `/api/master/api-post-add-update-master-system-role`   | Yes  |
-| Master   | GET    | `/api/master/api-get-view-master-survey-type`          | Yes  |
-| Master   | POST   | `/api/master/api-post-add-update-master-survey-type`   | Yes  |
-| Master   | GET    | `/api/master/api-get-view-master-property-type`        | Yes  |
-| Master   | POST   | `/api/master/api-post-add-update-master-property-type` | Yes  |
-| Master   | GET    | `/api/master/api-get-view-master-details`             | Yes  |
+| Module   | Method | Endpoint                                                             | Auth |
+| -------- | ------ | -------------------------------------------------------------------- | ---- |
+| Health   | GET    | `/health`                                                          | No   |
+| Auth     | POST   | `/api/auth/api-post-authenticate-user`                             | No   |
+| User     | GET    | `/api/user/api-get-view-user-list-info`                            | Yes  |
+| User     | POST   | `/api/user/api-post-add-update-user`                               | Yes  |
+| Customer | GET    | `/api/customer/api-get-view-list-customer-details`                 | Yes  |
+| Customer | GET    | `/api/customer/api-get-view-specific-customer-details`             | Yes  |
+| Customer | POST   | `/api/customer/api-post-add-update-customer-details`               | Yes  |
+| Project  | GET    | `/api/project/api-get-view-list-project-details`                   | Yes  |
+| Project  | GET    | `/api/project/api-get-view-specific-project-details`               | Yes  |
+| Project  | GET    | `/api/project/api-get-view-specific-customer-wise-project-details` | Yes  |
+| Project  | POST   | `/api/project/api-post-add-update-project`                         | Yes  |
+| Master   | GET    | `/api/master/api-get-view-master-system-roles`                     | Yes  |
+| Master   | POST   | `/api/master/api-post-add-update-master-system-role`               | Yes  |
+| Master   | GET    | `/api/master/api-get-view-master-survey-type`                      | Yes  |
+| Master   | POST   | `/api/master/api-post-add-update-master-survey-type`               | Yes  |
+| Master   | GET    | `/api/master/api-get-view-master-property-type`                    | Yes  |
+| Master   | POST   | `/api/master/api-post-add-update-master-property-type`             | Yes  |
+| Master   | GET    | `/api/master/api-get-view-master-details`                          | Yes  |
 
 ## Setup & Running Locally
 
@@ -102,6 +103,7 @@ Swagger must show these City Survey tags and APIs in the browser:
 - `Customer`: `POST /api/customer/api-post-add-update-customer-details`
 - `Project`: `GET /api/project/api-get-view-list-project-details`
 - `Project`: `GET /api/project/api-get-view-specific-project-details`
+- `Project`: `GET /api/project/api-get-view-specific-customer-wise-project-details`
 - `Project`: `POST /api/project/api-post-add-update-project`
 - `Master`: `GET /api/master/api-get-view-master-system-roles`
 - `Master`: `POST /api/master/api-post-add-update-master-system-role`
@@ -260,6 +262,32 @@ Required query parameter:
 
 ```text
 PROJECT_SYS_ID=2
+```
+
+Optional query parameter:
+
+```text
+ITEM=SPECIFIC
+```
+
+If `ITEM` is not provided, the API defaults to `SPECIFIC`.
+
+### View Specific Customer-Wise Project Details
+
+`GET /api/project/api-get-view-specific-customer-wise-project-details`
+
+Requires `Authorization: Bearer <token>`.
+
+Calls:
+
+```sql
+CALL USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY('VIEW_CUSTOMER_WISE_PROJECT', 'SPECIFIC', 4, @ERRNO, @ERRMSG);
+```
+
+Required query parameter:
+
+```text
+CUSTOMER_SYS_ID=4
 ```
 
 Optional query parameter:
@@ -440,10 +468,9 @@ environment segregation and robust release processes.
 
 ### Environment Variables Policy
 
-To prevent security leaks:
+To prevent security leaks**Strictly ignored:** Do not commit `.env`, `.env.development`,
 
-- **Strictly ignored:** Do not commit `.env`, `.env.development`,
-  `.env.production`, or any real credential file matched in `.gitignore`.
+- `.env.production`, or any real credential file matched in `.gitignore`.
 - **Syncing templates:** Keep `.env.example` updated with placeholder values
   when adding new environment variables.
 - **Secret injection:** Real Dev and Production credentials are managed through
@@ -508,5 +535,5 @@ Detailed backend and UI handoff documentation is available in `docs/`:
 - [Browser Demo and Demo Flow](./docs/BROWSER_DEMO_AND_DEMO_FLOW.md)
 - [Dev Server Deployment Checklist](./docs/DEV_SERVER_DEPLOYMENT_CHECKLIST.md)
 - [Run and Test Guide](./docs/RUN_AND_TEST_GUIDE.md)
-- [Work Report and Backend Handoff KT](./docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-15.md)
+- [Work Report and Backend Handoff KT](./docs/WORK_REPORT_AND_HANDOFF_KT_2026-07-17.md)
 - [UI Developer Handoff KT](./docs/UI_DEVELOPER_HANDOFF_KT.md)

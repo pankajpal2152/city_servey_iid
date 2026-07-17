@@ -1,6 +1,6 @@
 # City Survey Documentation Pack
 
-Date: 2026-07-15
+Date: 2026-07-17
 
 This folder contains the backend handoff documentation for the current City
 Survey Node.js API scope.
@@ -13,7 +13,7 @@ Survey Node.js API scope.
 - [Browser Demo and Demo Flow](./BROWSER_DEMO_AND_DEMO_FLOW.md)
 - [Dev Server Deployment Checklist](./DEV_SERVER_DEPLOYMENT_CHECKLIST.md)
 - [Run and Test Guide](./RUN_AND_TEST_GUIDE.md)
-- [Work Report and Backend Handoff KT](./WORK_REPORT_AND_HANDOFF_KT_2026-07-15.md)
+- [Work Report and Backend Handoff KT](./WORK_REPORT_AND_HANDOFF_KT_2026-07-17.md)
 - [UI Developer Handoff KT](./UI_DEVELOPER_HANDOFF_KT.md)
 
 ## Current Active API Scope
@@ -27,6 +27,7 @@ Survey Node.js API scope.
 - `POST /api/customer/api-post-add-update-customer-details`
 - `GET /api/project/api-get-view-list-project-details`
 - `GET /api/project/api-get-view-specific-project-details`
+- `GET /api/project/api-get-view-specific-customer-wise-project-details`
 - `POST /api/project/api-post-add-update-project`
 - `GET /api/master/api-get-view-master-system-roles`
 - `POST /api/master/api-post-add-update-master-system-role`

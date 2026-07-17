@@ -1,6 +1,6 @@
 # Module Architecture and Scenario Flow
 
-Date: 2026-07-15
+Date: 2026-07-17
 
 ## Current Backend Scope
 
@@ -14,6 +14,7 @@ The City Survey backend currently exposes the following active APIs:
 - View specific customer profile/details through `USP_GET_SPECIFIC_CUSTOMER_ACTIVITY`
 - View list project details through `USP_GET_LIST_PROJECT_ACTIVITY`
 - View specific project details through `USP_GET_SPECIFIC_PROJECT_ACTIVITY`
+- View customer-wise project details through `USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY`
 - Add or update project through `USP_POST_PROJECT_ACTIVITY`
 - View master system roles through `USP_GET_ALL_MASTER_DATA`
 - Add or update master system role through `USP_POST_ALL_MASTER_DATA`
@@ -36,7 +37,7 @@ not mounted in `index.js` for this City Survey phase.
 | Auth route | `routes/auth.js` | Handles user authentication, calls auth stored procedure, signs JWT | Active |
 | User route | `routes/user.js` | Handles user list view plus add/update user, calls user stored procedures | Active |
 | Customer route | `routes/customer.js` | Handles customer list view, specific customer profile, add/update customer details, and PIC records | Active |
-| Project route | `routes/project.js` | Handles project list view, specific project details, and add/update project, calls project stored procedures | Active |
+| Project route | `routes/project.js` | Handles project list view, specific project details, customer-wise project details, and add/update project, calls project stored procedures | Active |
 | Master route | `routes/master.js` | Handles system-role, survey-type, property-type, and master-details list view plus add/update APIs | Active |
 | Health route | `routes/health.js` | Returns a lightweight API status response without JWT or DB calls | Active |
 | JWT middleware | `middlewares/auth.js` | Validates `Authorization: Bearer <token>` before protected APIs | Active |
@@ -80,6 +81,7 @@ flowchart LR
   SpecificCustomerSP["USP_GET_SPECIFIC_CUSTOMER_ACTIVITY"]
   ProjectListSP["USP_GET_LIST_PROJECT_ACTIVITY"]
   SpecificProjectSP["USP_GET_SPECIFIC_PROJECT_ACTIVITY"]
+  CustomerWiseProjectSP["USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY"]
   ProjectSP["USP_POST_PROJECT_ACTIVITY"]
   MasterListSP["USP_GET_ALL_MASTER_DATA"]
   MasterPostSP["USP_POST_ALL_MASTER_DATA"]
@@ -109,6 +111,7 @@ flowchart LR
   DB --> SpecificCustomerSP
   DB --> ProjectListSP
   DB --> SpecificProjectSP
+  DB --> CustomerWiseProjectSP
   DB --> ProjectSP
   DB --> MasterListSP
   DB --> MasterPostSP
@@ -120,6 +123,7 @@ flowchart LR
   SpecificCustomerSP --> Helper
   ProjectListSP --> Helper
   SpecificProjectSP --> Helper
+  CustomerWiseProjectSP --> Helper
   ProjectSP --> Helper
   MasterListSP --> Helper
   MasterPostSP --> Helper
@@ -515,6 +519,47 @@ is treated as:
 GET /api/project/api-get-view-specific-project-details?ITEM=SPECIFIC&PROJECT_SYS_ID=2
 ```
 
+## Request Flow: View Customer-Wise Project Details
+
+Endpoint:
+
+`GET /api/project/api-get-view-specific-customer-wise-project-details`
+
+Stored procedure:
+
+`USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY('VIEW_CUSTOMER_WISE_PROJECT', P_ITEM, P_CUSTOMER_SYS_ID, @ERRNO, @ERRMSG)`
+
+```mermaid
+sequenceDiagram
+  participant UI as Browser or UI
+  participant API as Express Project API
+  participant JWT as JWT Middleware
+  participant DB as DEV_CITY_SURVEY
+  participant SP as Customer-Wise Project Stored Procedure
+
+  UI->>API: GET customer-wise project details with Bearer token
+  API->>JWT: Validate JWT
+  JWT-->>API: Attach req.user
+  API->>API: Validate CUSTOMER_SYS_ID and default ITEM to SPECIFIC
+  API->>DB: CALL USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY
+  DB->>SP: Fetch projects linked to the customer
+  SP-->>DB: JSON_VALUE response
+  DB-->>API: Procedure response
+  API-->>UI: Customer-wise project JSON
+```
+
+Default query behavior:
+
+```text
+GET /api/project/api-get-view-specific-customer-wise-project-details?CUSTOMER_SYS_ID=4
+```
+
+is treated as:
+
+```text
+GET /api/project/api-get-view-specific-customer-wise-project-details?ITEM=SPECIFIC&CUSTOMER_SYS_ID=4
+```
+
 ## Request Flow: Add or Update Project
 
 Endpoint:
@@ -891,6 +936,7 @@ GET /api/master/api-get-view-master-details?ITEM=VIEW_ALL&RECORD_SYS_ID=0&ORGANI
 | Missing customer fields | `POST /api/customer/api-post-add-update-customer-details` | Missing required ADD field, valid token | HTTP 400 with validation response |
 | View project list | `GET /api/project/api-get-view-list-project-details` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, project list response |
 | View specific project | `GET /api/project/api-get-view-specific-project-details` | Valid token, `PROJECT_SYS_ID=2`, optional `ITEM=SPECIFIC` | HTTP 200, specific project response |
+| View customer-wise project | `GET /api/project/api-get-view-specific-customer-wise-project-details` | Valid token, `CUSTOMER_SYS_ID=4`, optional `ITEM=SPECIFIC` | HTTP 200, customer-wise project response |
 | Add project | `POST /api/project/api-post-add-update-project` | Valid project payload, valid token | HTTP 200, DB response, project records may be created |
 | Missing project fields | `POST /api/project/api-post-add-update-project` | Missing required ADD field, valid token | HTTP 400 with validation response |
 | View system roles | `GET /api/master/api-get-view-master-system-roles` | Valid token, optional `ITEM=VIEW_ALL` | HTTP 200, system role list response |
@@ -919,6 +965,7 @@ Backend owns:
 - Specific customer id validation
 - Customer payload validation before DB call
 - Specific project id validation before DB call
+- Customer-wise project customer id validation before DB call
 - Project payload validation before DB call
 - Master system-role, survey-type, property-type, and master-details request validation before DB call
 

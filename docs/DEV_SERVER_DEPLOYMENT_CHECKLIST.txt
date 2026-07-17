@@ -1,6 +1,6 @@
 # Dev Server Deployment Checklist
 
-Date: 2026-07-15
+Date: 2026-07-17
 
 ## Purpose
 
@@ -151,6 +151,7 @@ Verify:
 - Procedure `USP_POST_CUSTOMER_DETAILS_ACTIVITY` exists
 - Procedure `USP_GET_LIST_PROJECT_ACTIVITY` exists
 - Procedure `USP_GET_SPECIFIC_PROJECT_ACTIVITY` exists
+- Procedure `USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY` exists
 - Procedure `USP_POST_PROJECT_ACTIVITY` exists
 - Procedure `USP_GET_ALL_MASTER_DATA` exists
 - Procedure `USP_POST_ALL_MASTER_DATA` exists
@@ -176,6 +177,7 @@ Verify with Swagger:
 - Protected customer API validates payload when token is provided
 - Protected project list API returns `VIEW_ALL` response
 - Protected specific project API returns `SPECIFIC` response for `PROJECT_SYS_ID`
+- Protected customer-wise project API returns `SPECIFIC` response for `CUSTOMER_SYS_ID`
 - Protected project API validates payload when token is provided
 - Protected system-role list API returns `VIEW_ALL` response
 - Protected system-role API validates payload when token is provided
@@ -226,16 +228,26 @@ Then run:
 3. Add/update duplicate sample user should return HTTP 200 and duplicate email
    response.
 4. Specific project GET at `/api/project/api-get-view-specific-project-details?ITEM=SPECIFIC&PROJECT_SYS_ID=2` should return HTTP 200 when that dev record exists.
-5. Project validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+5. Customer-wise project GET at `/api/project/api-get-view-specific-customer-wise-project-details?ITEM=SPECIFIC&CUSTOMER_SYS_ID=4` should return HTTP 200 when that dev customer has projects.
+6. Project validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `CUSTOMER_SYS_ID is required`.
-5. System-role validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+7. System-role validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `RECORD_SYS_ID is required`.
-6. Survey-type validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+8. Survey-type validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `RECORD_SYS_ID is required`.
-7. Property-type validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
+9. Property-type validation body `{ "ITEM": "ADD" }` should return HTTP 400 and
    `RECORD_SYS_ID is required`.
-8. Master-details GET at `/api/master/api-get-view-master-details` should
+10. Master-details GET at `/api/master/api-get-view-master-details` should
    return HTTP 200 with `status: true` when a valid token is used.
+
+Current DB follow-up from 2026-07-17:
+
+- The customer-wise project API is mounted and reaches
+  `USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY`.
+- The procedure currently returns `ERRNO=1054` with
+  `Unknown column 'PI.PROJECT_ADDRESS' in 'field list'`.
+- Dev deployment should treat this specific API as pending DB procedure fix
+  until the stored procedure returns its expected JSON response.
 
 ## 11. Rollback Checklist
 
@@ -250,7 +262,7 @@ If deployment fails:
 
 ## 12. Known Dev Notes
 
-- During local testing on 2026-07-15, port `3000` was already occupied by a
+- During local testing on 2026-07-17, port `3000` was already occupied by a
   separate `node` process. The local City Survey `.env` now uses port `3103`.
 - The add/update stored procedure commits internally, so avoid write tests with
   new email addresses, full customer payloads, full project payloads, full

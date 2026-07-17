@@ -1,6 +1,6 @@
 # Browser Demo and Demo Flow
 
-Date: 2026-07-15
+Date: 2026-07-17
 
 ## Demo Goal
 
@@ -15,6 +15,7 @@ RDS database and that the active APIs work end to end:
 - Add/update customer details with JWT protection
 - View project list with JWT protection
 - View specific project details with JWT protection
+- View customer-wise project details with JWT protection
 - Add/update project with JWT protection
 - View system roles with JWT protection
 - Add/update system role with JWT protection
@@ -97,6 +98,7 @@ Expected:
   - `POST /api/customer/api-post-add-update-customer-details`
   - `GET /api/project/api-get-view-list-project-details`
   - `GET /api/project/api-get-view-specific-project-details`
+  - `GET /api/project/api-get-view-specific-customer-wise-project-details`
   - `POST /api/project/api-post-add-update-project`
   - `GET /api/master/api-get-view-master-system-roles`
   - `POST /api/master/api-post-add-update-master-system-role`
@@ -402,7 +404,34 @@ Expected:
 - Response contains `status: true` when the project id exists
 - Response contains specific project details from the stored procedure
 
-### Step 13: Test Protected Project API Routing Safely
+### Step 13: Test Protected Customer-Wise Project Details API
+
+Open:
+
+`GET /api/project/api-get-view-specific-customer-wise-project-details`
+
+Click:
+
+`Try it out`
+
+Use:
+
+```text
+ITEM=SPECIFIC
+CUSTOMER_SYS_ID=4
+```
+
+Click:
+
+`Execute`
+
+Expected:
+
+- HTTP 200
+- Response contains `status: true` when the customer id has projects
+- Response contains customer-wise project details from the stored procedure
+
+### Step 14: Test Protected Project API Routing Safely
 
 Open:
 
@@ -438,7 +467,7 @@ record.
 Only execute the full database developer sample if the team approves creating
 real dev DB project records.
 
-### Step 14: Test Protected System Role List API
+### Step 15: Test Protected System Role List API
 
 Open:
 
@@ -461,7 +490,7 @@ Expected:
 - Response contains `status: true`
 - Response contains system role rows when data exists
 
-### Step 15: Test Protected System Role API Routing Safely
+### Step 16: Test Protected System Role API Routing Safely
 
 Open:
 
@@ -494,7 +523,7 @@ Expected safe demo result:
 This proves Swagger and JWT reach the system-role master route without creating
 a system-role record.
 
-### Step 16: Test Protected Survey Type List API
+### Step 17: Test Protected Survey Type List API
 
 Open:
 
@@ -517,7 +546,7 @@ Expected:
 - Response contains `status: true`
 - Response contains survey type rows when data exists
 
-### Step 17: Test Protected Survey Type API Routing Safely
+### Step 18: Test Protected Survey Type API Routing Safely
 
 Open:
 
@@ -550,7 +579,7 @@ Expected safe demo result:
 This proves Swagger and JWT reach the survey-type master route without creating
 a survey-type record.
 
-### Step 18: Test Protected Property Type List API
+### Step 19: Test Protected Property Type List API
 
 Open:
 
@@ -573,7 +602,7 @@ Expected:
 - Response contains `status: true`
 - Response contains property type rows when data exists
 
-### Step 19: Test Protected Property Type API Routing Safely
+### Step 20: Test Protected Property Type API Routing Safely
 
 Open:
 
@@ -606,7 +635,7 @@ Expected safe demo result:
 This proves Swagger and JWT reach the property-type master route without
 creating a property-type record.
 
-### Step 20: Test Protected Master Details API
+### Step 21: Test Protected Master Details API
 
 Open:
 
@@ -786,6 +815,19 @@ const specificProjectResponse = await fetch(`${baseUrl}/api/project/api-get-view
 });
 
 console.log(specificProjectResponse.status, await specificProjectResponse.json());
+```
+
+To validate the customer-wise project details route without writing data:
+
+```javascript
+const customerWiseProjectResponse = await fetch(`${baseUrl}/api/project/api-get-view-specific-customer-wise-project-details?ITEM=SPECIFIC&CUSTOMER_SYS_ID=4`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${authJson.Token}`,
+  },
+});
+
+console.log(customerWiseProjectResponse.status, await customerWiseProjectResponse.json());
 ```
 
 To validate the project add/update route without writing data:

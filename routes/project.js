@@ -23,6 +23,39 @@ function parseRequiredInt(value, fieldName) {
   return { value: parsedValue };
 }
 
+function parseMaybeJson(value) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch (error) {
+    return value;
+  }
+}
+
+async function getProcedureOutResponse(conn) {
+  const [outRows] = await conn.query('SELECT @ERRNO AS ERRNO, @ERRMSG AS ERRMSG;');
+  const out = outRows?.[0];
+
+  if (!out || (out.ERRNO === null && out.ERRMSG === null)) {
+    return null;
+  }
+
+  const parsedMessage = parseMaybeJson(out.ERRMSG);
+
+  if (parsedMessage && typeof parsedMessage === 'object') {
+    return parsedMessage;
+  }
+
+  return {
+    status: out.ERRNO ? 'false' : 'true',
+    response: parsedMessage,
+    errno: out.ERRNO,
+  };
+}
+
 function validateProjectPayload(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     return 'Request body must be a project object';
@@ -98,6 +131,13 @@ router.get('/api-get-view-list-project-details', auth, async (req, res) => {
     const result = getProcedureJsonValue(rows);
 
     if (!result) {
+      const outResult = await getProcedureOutResponse(conn);
+
+      if (outResult) {
+        const statusCode = outResult.status === 'false' ? 500 : 200;
+        return res.status(statusCode).json(outResult);
+      }
+
       return res.status(500).json({
         status: 'false',
         response: 'Oops!! something went wrong',
@@ -171,6 +211,93 @@ router.get('/api-get-view-specific-project-details', auth, async (req, res) => {
     const result = getProcedureJsonValue(rows);
 
     if (!result) {
+      const outResult = await getProcedureOutResponse(conn);
+
+      if (outResult) {
+        const statusCode = outResult.status === 'false' ? 500 : 200;
+        return res.status(statusCode).json(outResult);
+      }
+
+      return res.status(500).json({
+        status: 'false',
+        response: 'Oops!! something went wrong',
+      });
+    }
+
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+// GET /api/project/api-get-view-specific-customer-wise-project-details
+/**
+ * @swagger
+ * /api/project/api-get-view-specific-customer-wise-project-details:
+ *   get:
+ *     tags:
+ *       - Project
+ *     summary: View City Survey customer-wise project details
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: ITEM
+ *         schema:
+ *           type: string
+ *           default: SPECIFIC
+ *         required: false
+ *         description: Customer-wise project view mode passed to the stored procedure
+ *         example: SPECIFIC
+ *       - in: query
+ *         name: CUSTOMER_SYS_ID
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Customer record id used to fetch related project details
+ *         example: 4
+ *     responses:
+ *       200:
+ *         description: Customer-wise project details response from stored procedure
+ *       400:
+ *         description: Invalid request parameter
+ *       401:
+ *         description: Authorization token missing
+ *       403:
+ *         description: Authorization token invalid
+ */
+router.get('/api-get-view-specific-customer-wise-project-details', auth, async (req, res) => {
+  let conn;
+
+  try {
+    const item = req.query.ITEM || 'SPECIFIC';
+    const customerSysId = parseRequiredInt(req.query.CUSTOMER_SYS_ID, 'CUSTOMER_SYS_ID');
+
+    if (customerSysId.error) {
+      return res.status(400).json({
+        status: 'false',
+        response: customerSysId.error,
+      });
+    }
+
+    conn = await db.getConnection();
+    const [rows] = await conn.execute(
+      'CALL USP_GET_SPECIFIC_CUSTOMER_WISE_PROJECT_ACTIVITY(?, ?, ?, @ERRNO, @ERRMSG);',
+      ['VIEW_CUSTOMER_WISE_PROJECT', item, customerSysId.value]
+    );
+
+    const result = getProcedureJsonValue(rows);
+
+    if (!result) {
+      const outResult = await getProcedureOutResponse(conn);
+
+      if (outResult) {
+        const statusCode = outResult.status === 'false' ? 500 : 200;
+        return res.status(statusCode).json(outResult);
+      }
+
       return res.status(500).json({
         status: 'false',
         response: 'Oops!! something went wrong',
